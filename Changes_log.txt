@@ -1,0 +1,5 @@
+GPTool renamed to AJAX. Yayy!!!
+
+Removed plotting capabilities.
+
+Up next: Remove the unwanted modes like doRunFilteredMode, dodedisp, isInline, doZeroDMSub, doUseTempo2, doWriteFiltered2D, doWriteChanFlags, doWriteTimeFlags, doWriteFullDM.
