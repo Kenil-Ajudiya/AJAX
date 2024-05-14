@@ -573,172 +573,24 @@ void Runtime::intializeFiles()
 
 void Runtime::writeAll(ThreadPacket *threadPacket)
 {
-	if (!info.doPolarMode)
+	unsigned char *filteredRawData = threadPacket->basicAnalysisWrite[0]->filteredRawDataChar;
+	cout << "Start writing output Buffer; nbuff = " << nbuff << endl;
+	for (int i = 0; i < nbuff; i++)
 	{
-
-		if (info.doWriteFullDM && !info.doFilteringOnly)
-		{
-
-			timeFullDMWrite -= omp_get_wtime(); // benchmark
-			threadPacket->advancedAnalysis[0]->writeFullDM("fullDM_filtered.gpt", "fullDM_unfiltered.gpt");
-			threadPacket->advancedAnalysis[0]->writeFullDMCount("fullDMCount.gpt");
-			timeFullDMWrite += omp_get_wtime(); // benchmark
-		}
-		if (info.doWriteFiltered2D)
-		{
-			if (info.sampleSizeBytes == 1)
-			{
-				ostringstream filename;
-				filename.str("");
-				filename.clear();
-				filename << info.outputfilepath << ".gpt";
-				FILE *filteredRawDataFile;
-				filteredRawDataFile = fopen(filename.str().c_str(), "ab");
-				short int *ptrFilteredData = threadPacket->basicAnalysisWrite[0]->filteredRawData;
-				long int size = (threadPacket->basicAnalysisWrite[0]->blockLength) * info.noOfChannels;
-				unsigned char *tmp = new unsigned char[size];
-				unsigned char *ptrtmp = tmp;
-				for (int i = 0; i < size; i++, ptrtmp++)
-				{
-					*ptrtmp = (unsigned char)(*ptrFilteredData++);
-				}
-				fwrite(tmp, sizeof(unsigned char), size, filteredRawDataFile);
-				delete[] tmp;
-				fclose(filteredRawDataFile);
-			}
-			else
-			{
-				ostringstream filename;
-				filename << info.outputfilepath << ".gpt";
-				threadPacket->basicAnalysisWrite[0]->writeFilteredRawData(filename.str().c_str());
-			}
-		}
-		if (info.isInline)
-		{
-			cout << "nbuff :" << nbuff << endl;
-			int size = info.blockSizeSamples * info.noOfChannels / nbuff;
-			short int *filteredRawData = threadPacket->basicAnalysisWrite[0]->filteredRawData;
-			char *headerInfo = threadPacket->basicAnalysisWrite[0]->headerInfo;
-			cout << "Start writing output Buffer" << endl;
-			for (int i = 0; i < nbuff; i++)
-			{
-				shmInterface->writeToSHM(filteredRawData + i * size, headerInfo + i * 4096);
-			}
-		}
-		else if (info.doFRB)
-		{
-			unsigned char *filteredRawData = threadPacket->basicAnalysisWrite[0]->filteredRawDataChar;
-			cout << "Start writing output Buffer; nbuff = " << nbuff << endl;
-			for (int i = 0; i < nbuff; i++)
-			{
-				shmInterface->writeToSHM_FRB(filteredRawData, threadPacket->basicAnalysisWrite[0]->timestamp);
-			}
-		}
-		threadPacket->basicAnalysisWrite[0]->writeCurBandshape("intensity_summary.gpt");
-		timeRFITimeFlagsWrite -= omp_get_wtime(); // benchmark
-		if (info.doWriteTimeFlags && info.doTimeFlag)
-			threadPacket->rFIFilteringTime[0]->writeFlags("timeflag.gpt");
-		timeRFITimeFlagsWrite += omp_get_wtime(); // benchmark
-
-		timeRFIChanFlagsWrite -= omp_get_wtime(); // benchmark
-		if (info.doWriteChanFlags && info.doChanFlag)
-			threadPacket->rFIFilteringChan[0]->writeFlags("chanflag.gpt", startFlags, info.startChannel, endFlags, info.noOfChannels - info.stopChannel);
-		timeRFIChanFlagsWrite += omp_get_wtime(); // benchmark
+		shmInterface->writeToSHM_FRB(filteredRawData, threadPacket->basicAnalysisWrite[0]->timestamp);
 	}
-	else
-	{
-		if (info.doWriteFiltered2D)
-		{
-			ostringstream filename;
-			filename.str("");
-			filename.clear();
-			filename << info.outputfilepath << ".gpt";
-			FILE *filteredRawDataFile;
-			filteredRawDataFile = fopen(filename.str().c_str(), "ab");
-			short int **ptrFilteredData = new short int *[info.noOfPol];
-			for (int k = 0; k < info.noOfPol; k++)
-			{
-				ptrFilteredData[k] = threadPacket->basicAnalysisWrite[k]->filteredRawData;
-			}
-			if (info.sampleSizeBytes == 1)
-			{
-				char tmp;
-				for (int i = 0; i < (threadPacket->basicAnalysisWrite[0]->blockLength) * info.noOfChannels; i++)
-				{
-					for (int k = 0; k < info.noOfPol; k++)
-					{
-						tmp = (char)(*ptrFilteredData[k]++);
-						fwrite(&tmp, sizeof(char), 1, filteredRawDataFile);
-					}
-				}
-			}
-			else
-			{
-				// cout<<"Writing full polar data"<<endl;
-				// cout<<"Block length: "<<(threadPacket->basicAnalysisWrite[0]->blockLength)<<endl;
-				// cout<<"nSamples: "<<(threadPacket->basicAnalysisWrite[0]->blockLength)*info.noOfChannels<<endl;
-				for (int i = 0; i < (threadPacket->basicAnalysisWrite[0]->blockLength) * info.noOfChannels; i++)
-				{
 
-					for (int k = 0; k < info.noOfPol; k++)
-					{
-						fwrite(ptrFilteredData[k]++, sizeof(short int), 1, filteredRawDataFile);
-					}
-				}
-				// cout<<"Done writing"<<endl;
-			}
-			fclose(filteredRawDataFile);
-		}
+	threadPacket->basicAnalysisWrite[0]->writeCurBandshape("intensity_summary.gpt");
+	timeRFITimeFlagsWrite -= omp_get_wtime(); // benchmark
+	if (info.doWriteTimeFlags && info.doTimeFlag)
+		threadPacket->rFIFilteringTime[0]->writeFlags("timeflag.gpt");
+	timeRFITimeFlagsWrite += omp_get_wtime(); // benchmark
 
-		for (int k = 0; k < info.noOfPol; k++)
-		{
-			ostringstream filename;
-			ostringstream filenameUnfiltered;
-			timeFullDMWrite -= omp_get_wtime(); // benchmark
-			if (info.doWriteFullDM && !info.doFilteringOnly)
-			{
-				filename << "fullDM_filtered" << k + 1 << ".gpt";
-				filenameUnfiltered << "fullDM_unfiltered" << k + 1 << ".gpt";
+	timeRFIChanFlagsWrite -= omp_get_wtime(); // benchmark
+	if (info.doWriteChanFlags && info.doChanFlag)
+		threadPacket->rFIFilteringChan[0]->writeFlags("chanflag.gpt", startFlags, info.startChannel, endFlags, info.noOfChannels - info.stopChannel);
+	timeRFIChanFlagsWrite += omp_get_wtime(); // benchmark
 
-				timeFullDMWrite -= omp_get_wtime(); // benchmark
-				threadPacket->advancedAnalysis[k]->writeFullDM(filename.str().c_str(), filenameUnfiltered.str().c_str());
-				timeFullDMWrite += omp_get_wtime(); // benchmark
-
-				filename.str("");
-				filename.clear();
-				filename << "fullDMCount" << k + 1 << ".gpt";
-				timeFullDMWrite -= omp_get_wtime(); // benchmark
-				threadPacket->advancedAnalysis[k]->writeFullDMCount(filename.str().c_str());
-				timeFullDMWrite += omp_get_wtime(); // benchmark
-			}
-
-			/**
-			filename.str("");
-			filename.clear();
-			filename<<"intensity_summary"<<k+1<<".gpt";
-			threadPacket->basicAnalysis[0]->writeCurBandshape(filename.str().c_str());
-			**/
-			timeFullDMWrite += omp_get_wtime(); // benchmark
-
-			filename.str("");
-			filename.clear();
-			filename << "timeflag" << k + 1 << ".gpt";
-
-			timeRFITimeFlagsWrite -= omp_get_wtime(); // benchmark
-			if (info.doWriteTimeFlags && info.doTimeFlag)
-				threadPacket->rFIFilteringTime[k]->writeFlags(filename.str().c_str());
-			timeRFITimeFlagsWrite += omp_get_wtime(); // benchmark
-
-			filename.str("");
-			filename.clear();
-			filename << "chanflag" << k + 1 << ".gpt";
-
-			timeRFIChanFlagsWrite -= omp_get_wtime(); // benchmark
-			if (info.doWriteChanFlags && info.doChanFlag)
-				threadPacket->rFIFilteringChan[k]->writeFlags(filename.str().c_str(), startFlags, info.startChannel, endFlags, info.noOfChannels - info.stopChannel);
-			timeRFIChanFlagsWrite += omp_get_wtime(); // benchmark
-		}
-	}
 	testStatistics(threadPacket);
 	writeFlagStats(threadPacket);
 }
@@ -1634,13 +1486,13 @@ int main(int argc, char *argv[])
 	act.sa_handler = intHandler;
 	sigaction(SIGINT, &act, NULL);
 
-	#pragma omp parallel sections
+#pragma omp parallel sections
 	{
-		#pragma omp section
+#pragma omp section
 		{
 			runtime->action(0, 0);
 		}
-		#pragma omp section
+#pragma omp section
 		{
 			runtime->fillPipe();
 			double loopTime = omp_get_wtime(); // benchmark
