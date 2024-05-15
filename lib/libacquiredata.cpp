@@ -126,7 +126,7 @@ void AcquireData::readData(int iBeam)
 		{
 			long samplesToTake = nChannel * info.noOfPol * blockLength * info.sampleSizeBytes;
 			rawDataChar = new unsigned char[blockLength * info.noOfPol * nChannel];
-			shmInterface->readFromSHM_FRB(rawDataChar);
+			shmInterface->readFromSHM_SPOTLIGHT(rawDataChar);
 		}
 		else if (info.shmID == 7)
 			readFromSHM_SPOTLIGHT();
@@ -160,13 +160,13 @@ void AcquireData::initializeSHM()
 		// file shm
 		cout << "Attempting to attach to file simulator FRB SHM." << endl;
 		shmInterface = new Correlator(info.noOfChannels, info.samplingInterval);
-		shmInterface->initializeReadSHM_FRB(1);
+		shmInterface->initializeReadSHM_SPOTLIGHT(1);
 		break;
 	case 5: // FRB file shm
 		// file shm
 		cout << "Attempting to attach to FRB SHM." << endl;
 		shmInterface = new Correlator(info.noOfChannels, info.samplingInterval);
-		shmInterface->initializeReadSHM_FRB(0);
+		shmInterface->initializeReadSHM_SPOTLIGHT(0);
 		break;
 	case 7:
 		// process psr shm
