@@ -217,7 +217,7 @@ Runtime::Runtime(Information info_, int nBeams_)
 	}
 	info.fillParams();
 
-	if (info.isInline || info.doFRB || info.shmID == 4 || info.shmID == 5)
+	if (info.doFRB || info.shmID == 4 || info.shmID == 5)
 	{
 		info.blockSizeSamples = (acquireData->info).blockSizeSamples;
 		info.blockSizeSec = (acquireData->info).blockSizeSec;
@@ -256,20 +256,10 @@ Runtime::Runtime(Information info_, int nBeams_)
 	}
 	if (!info.doReadFromFile)
 	{
-		if (info.isInline)
-		{
-			shmInterface = new Correlator(acquireData->dataHdr, acquireData->dataBuffer);
-			cout << "Initilizing write SHM [collect]" << endl;
-			shmInterface->initializeWriteSHM();
-			nbuff = acquireData->nbuff;
-		}
-		else if (info.doFRB)
-		{
-			shmInterface = new Correlator(acquireData->dataHdr, acquireData->dataBuffer);
-			cout << "Initilizing write SHM [FRB]" << endl;
-			shmInterface->initializeWriteSHM_FRB(0);
-			nbuff = acquireData->nbuff;
-		}
+		shmInterface = new Correlator(acquireData->dataHdr, acquireData->dataBuffer);
+		cout << "Initilizing write SHM [FRB]" << endl;
+		shmInterface->initializeWriteSHM_SPOTLIGHT(0);
+		nbuff = acquireData->nbuff;
 	}
 
 	AcquireData::info = info;
@@ -577,7 +567,7 @@ void Runtime::writeAll(ThreadPacket *threadPacket)
 	cout << "Start writing output Buffer; nbuff = " << nbuff << endl;
 	for (int i = 0; i < nbuff; i++)
 	{
-		shmInterface->writeToSHM_FRB(filteredRawData, threadPacket->basicAnalysisWrite[0]->timestamp);
+		shmInterface->writeToSHM_SPOTLIGHT(filteredRawData, threadPacket->basicAnalysisWrite[0]->timestamp);
 	}
 
 	threadPacket->basicAnalysisWrite[0]->writeCurBandshape("intensity_summary.gpt");
@@ -1486,13 +1476,13 @@ int main(int argc, char *argv[])
 	act.sa_handler = intHandler;
 	sigaction(SIGINT, &act, NULL);
 
-#pragma omp parallel sections
+	#pragma omp parallel sections
 	{
-#pragma omp section
+		#pragma omp section
 		{
 			runtime->action(0, 0);
 		}
-#pragma omp section
+		#pragma omp section
 		{
 			runtime->fillPipe();
 			double loopTime = omp_get_wtime(); // benchmark

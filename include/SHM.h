@@ -9,13 +9,13 @@ class Correlator
 {
 public:
 	void initializeReadSHM();
-	void initializeReadSHM_FRB(char fileSHM);
+	void initializeReadSHM_SPOTLIGHT(char fileSHM);
 	int initializeWriteSHM();
-	int initializeWriteSHM_FRB(char fileSHM);
-	void writeToSHM_FRB(unsigned char *rawData);
-	void writeToSHM_FRB(unsigned char *rawData, struct timeval timestamp_gps);
+	int initializeWriteSHM_SPOTLIGHT(char fileSHM);
+	void writeToSHM_SPOTLIGHT(unsigned char *rawData);
+	void writeToSHM_SPOTLIGHT(unsigned char *rawData, struct timeval timestamp_gps);
 	void writeToSHM(unsigned short int *rawData);
-	void readFromSHM_FRB(unsigned char *rawData);
+	void readFromSHM_SPOTLIGHT(unsigned char *rawData);
 	void readFromSHM(unsigned short int *rawData);
 	void writeToSHM(short int *rawData, char *header);
 	void copyHeaderInfo();
