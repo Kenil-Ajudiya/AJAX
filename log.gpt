@@ -257,3 +257,363 @@ Flagged samples will be replaced by modal value of zero DM time series.Raw file 
 
 
 --------------------------------------------
+Time of run: Mon May 20 15:56:14 2024
+
+
+ajax ver 4.6 (optimized for Band-4 FRB detection)
+FILTERING ONLY MODE
+
+INLINE MODE for FRB pipeline - read from and write to a shared memory
+Mode of operation: PA
+
+Lowest frequency :300 MHz
+Bandwidth: 200 MHz
+Sideband flag: 1. Frequency of first channel is 300 MHz
+Number of channels: 4096
+Sampling interval :1.31072 ms
+
+Display window size has been adjusted to accomodate integer multiples of shared memory buffer
+Display window size :5 sec
+
+Number of channels excluded at start: 50
+Number of channels excluded at end: 50
+
+Channel flagging turned on. Details of procedure: 
+	Bandhshape will be smoothened and then normalized.
+	Normalized bandshape will be used to detect RFI.
+	20 channels will be used as window length for smoothing
+	CutOff to RMS ratio: 2.5
+
+Time flagging turned on. Details of procedure: 
+	2-D time-frequency data will be normalized using smoothened bandshape before filtering
+	20 channels will be used as window length for smoothing
+	Histogram based algorithm selected.
+	CutOff to RMS ratio: 3
+
+Filtered data will have a rescaled mean of 8192
+
+Flagged samples will be replaced by modal value of zero DM time series.
+Raw file path: /data/gpuuser/NSM/01feb/5am/BM.raw.000
+
+
+--------------------------------------------
+Time of run: Mon May 20 16:01:19 2024
+
+
+ajax ver 4.6 (optimized for Band-4 FRB detection)
+FILTERING ONLY MODE
+
+INLINE MODE for FRB pipeline - read from and write to a shared memory
+Mode of operation: PA
+
+Lowest frequency :300 MHz
+Bandwidth: 200 MHz
+Sideband flag: 1. Frequency of first channel is 300 MHz
+Number of channels: 4096
+Sampling interval :1.31072 ms
+
+Display window size has been adjusted to accomodate integer multiples of shared memory buffer
+Display window size :5 sec
+
+Number of channels excluded at start: 50
+Number of channels excluded at end: 50
+
+Channel flagging turned on. Details of procedure: 
+	Bandhshape will be smoothened and then normalized.
+	Normalized bandshape will be used to detect RFI.
+	20 channels will be used as window length for smoothing
+	CutOff to RMS ratio: 2.5
+
+Time flagging turned on. Details of procedure: 
+	2-D time-frequency data will be normalized using smoothened bandshape before filtering
+	20 channels will be used as window length for smoothing
+	Histogram based algorithm selected.
+	CutOff to RMS ratio: 3
+
+Filtered data will have a rescaled mean of 8192
+
+Flagged samples will be replaced by modal value of zero DM time series.
+Raw file path: /data/gpuuser/NSM/01feb/5am/BM.raw.00
+
+
+--------------------------------------------
+Time of run: Mon May 20 16:04:22 2024
+
+
+ajax ver 4.6 (optimized for Band-4 FRB detection)
+FILTERING ONLY MODE
+
+INLINE MODE for FRB pipeline - read from and write to a shared memory
+Mode of operation: PA
+
+Lowest frequency :300 MHz
+Bandwidth: 200 MHz
+Sideband flag: 1. Frequency of first channel is 300 MHz
+Number of channels: 4096
+Sampling interval :1.31072 ms
+
+Display window size has been adjusted to accomodate integer multiples of shared memory buffer
+Display window size :5 sec
+
+Number of channels excluded at start: 50
+Number of channels excluded at end: 50
+
+Channel flagging turned on. Details of procedure: 
+	Bandhshape will be smoothened and then normalized.
+	Normalized bandshape will be used to detect RFI.
+	20 channels will be used as window length for smoothing
+	CutOff to RMS ratio: 2.5
+
+Time flagging turned on. Details of procedure: 
+	2-D time-frequency data will be normalized using smoothened bandshape before filtering
+	20 channels will be used as window length for smoothing
+	Histogram based algorithm selected.
+	CutOff to RMS ratio: 3
+
+Filtered data will have a rescaled mean of 8192
+
+Flagged samples will be replaced by modal value of zero DM time series.
+Raw file path: /data/gpuuser/NSM/01feb/5am/BM.raw.00
+
+
+--------------------------------------------
+Time of run: Mon May 20 16:08:07 2024
+
+
+ajax ver 4.6 (optimized for Band-4 FRB detection)
+FILTERING ONLY MODE
+
+INLINE MODE for FRB pipeline - read from and write to a shared memory
+Mode of operation: PA
+
+Lowest frequency :300 MHz
+Bandwidth: 200 MHz
+Sideband flag: 1. Frequency of first channel is 300 MHz
+Number of channels: 4096
+Sampling interval :1.31072 ms
+
+Display window size has been adjusted to accomodate integer multiples of shared memory buffer
+Display window size :5 sec
+
+Number of channels excluded at start: 50
+Number of channels excluded at end: 50
+
+Channel flagging turned on. Details of procedure: 
+	Bandhshape will be smoothened and then normalized.
+	Normalized bandshape will be used to detect RFI.
+	20 channels will be used as window length for smoothing
+	CutOff to RMS ratio: 2.5
+
+Time flagging turned on. Details of procedure: 
+	2-D time-frequency data will be normalized using smoothened bandshape before filtering
+	20 channels will be used as window length for smoothing
+	Histogram based algorithm selected.
+	CutOff to RMS ratio: 3
+
+Filtered data will have a rescaled mean of 8192
+
+Flagged samples will be replaced by modal value of zero DM time series.
+Raw file path: /data/gpuuser/NSM/01feb/5am/BM.raw.00
+
+
+--------------------------------------------
+Time of run: Mon May 20 16:16:04 2024
+
+
+ajax ver 4.6 (optimized for Band-4 FRB detection)
+FILTERING ONLY MODE
+
+INLINE MODE for FRB pipeline - read from and write to a shared memory
+Mode of operation: PA
+
+Lowest frequency :300 MHz
+Bandwidth: 200 MHz
+Sideband flag: 1. Frequency of first channel is 300 MHz
+Number of channels: 4096
+Sampling interval :1.31072 ms
+
+Display window size has been adjusted to accomodate integer multiples of shared memory buffer
+Display window size :5 sec
+
+Number of channels excluded at start: 50
+Number of channels excluded at end: 50
+
+Channel flagging turned on. Details of procedure: 
+	Bandhshape will be smoothened and then normalized.
+	Normalized bandshape will be used to detect RFI.
+	20 channels will be used as window length for smoothing
+	CutOff to RMS ratio: 2.5
+
+Time flagging turned on. Details of procedure: 
+	2-D time-frequency data will be normalized using smoothened bandshape before filtering
+	20 channels will be used as window length for smoothing
+	Histogram based algorithm selected.
+	CutOff to RMS ratio: 3
+
+Filtered data will have a rescaled mean of 8192
+
+Flagged samples will be replaced by modal value of zero DM time series.
+Inside display(), Raw file path: /data/gpuuser/NSM/01feb/5am/BM.raw.00
+
+
+--------------------------------------------
+Time of run: Mon May 20 16:21:13 2024
+
+
+ajax ver 4.6 (optimized for Band-4 FRB detection)
+FILTERING ONLY MODE
+
+INLINE MODE for FRB pipeline - read from and write to a shared memory
+Mode of operation: PA
+
+Lowest frequency :300 MHz
+Bandwidth: 200 MHz
+Sideband flag: 1. Frequency of first channel is 300 MHz
+Number of channels: 4096
+Sampling interval :1.31072 ms
+
+Display window size has been adjusted to accomodate integer multiples of shared memory buffer
+Display window size :5 sec
+
+Number of channels excluded at start: 50
+Number of channels excluded at end: 50
+
+Channel flagging turned on. Details of procedure: 
+	Bandhshape will be smoothened and then normalized.
+	Normalized bandshape will be used to detect RFI.
+	20 channels will be used as window length for smoothing
+	CutOff to RMS ratio: 2.5
+
+Time flagging turned on. Details of procedure: 
+	2-D time-frequency data will be normalized using smoothened bandshape before filtering
+	20 channels will be used as window length for smoothing
+	Histogram based algorithm selected.
+	CutOff to RMS ratio: 3
+
+Filtered data will have a rescaled mean of 8192
+
+Flagged samples will be replaced by modal value of zero DM time series.
+Inside display(), Raw file path: /data/gpuuser/NSM/01feb/5am/BM.raw.00
+
+
+--------------------------------------------
+Time of run: Mon May 20 16:23:06 2024
+
+
+ajax ver 4.6 (optimized for Band-4 FRB detection)
+FILTERING ONLY MODE
+
+INLINE MODE for FRB pipeline - read from and write to a shared memory
+Mode of operation: PA
+
+Lowest frequency :300 MHz
+Bandwidth: 200 MHz
+Sideband flag: 1. Frequency of first channel is 300 MHz
+Number of channels: 4096
+Sampling interval :1.31072 ms
+
+Display window size has been adjusted to accomodate integer multiples of shared memory buffer
+Display window size :5 sec
+
+Number of channels excluded at start: 50
+Number of channels excluded at end: 50
+
+Channel flagging turned on. Details of procedure: 
+	Bandhshape will be smoothened and then normalized.
+	Normalized bandshape will be used to detect RFI.
+	20 channels will be used as window length for smoothing
+	CutOff to RMS ratio: 2.5
+
+Time flagging turned on. Details of procedure: 
+	2-D time-frequency data will be normalized using smoothened bandshape before filtering
+	20 channels will be used as window length for smoothing
+	Histogram based algorithm selected.
+	CutOff to RMS ratio: 3
+
+Filtered data will have a rescaled mean of 8192
+
+Flagged samples will be replaced by modal value of zero DM time series.
+Inside display(), Raw file path: /data/gpuuser/NSM/01feb/5am/BM.raw.00
+
+
+--------------------------------------------
+Time of run: Mon May 20 16:29:17 2024
+
+
+ajax ver 4.6 (optimized for Band-4 FRB detection)
+FILTERING ONLY MODE
+
+INLINE MODE for FRB pipeline - read from and write to a shared memory
+Mode of operation: PA
+
+Lowest frequency :300 MHz
+Bandwidth: 200 MHz
+Sideband flag: 1. Frequency of first channel is 300 MHz
+Number of channels: 4096
+Sampling interval :1.31072 ms
+
+Display window size has been adjusted to accomodate integer multiples of shared memory buffer
+Display window size :5 sec
+
+Number of channels excluded at start: 50
+Number of channels excluded at end: 50
+
+Channel flagging turned on. Details of procedure: 
+	Bandhshape will be smoothened and then normalized.
+	Normalized bandshape will be used to detect RFI.
+	20 channels will be used as window length for smoothing
+	CutOff to RMS ratio: 2.5
+
+Time flagging turned on. Details of procedure: 
+	2-D time-frequency data will be normalized using smoothened bandshape before filtering
+	20 channels will be used as window length for smoothing
+	Histogram based algorithm selected.
+	CutOff to RMS ratio: 3
+
+Filtered data will have a rescaled mean of 8192
+
+Flagged samples will be replaced by modal value of zero DM time series.
+Inside display(), Raw file path: /data/gpuuser/NSM/01feb/5am/BM.raw.0
+
+
+--------------------------------------------
+Time of run: Mon May 20 16:31:59 2024
+
+
+ajax ver 4.6 (optimized for Band-4 FRB detection)
+FILTERING ONLY MODE
+
+INLINE MODE for FRB pipeline - read from and write to a shared memory
+Mode of operation: PA
+
+Lowest frequency :300 MHz
+Bandwidth: 200 MHz
+Sideband flag: 1. Frequency of first channel is 300 MHz
+Number of channels: 4096
+Sampling interval :1.31072 ms
+
+Display window size has been adjusted to accomodate integer multiples of shared memory buffer
+Display window size :5 sec
+
+Number of channels excluded at start: 50
+Number of channels excluded at end: 50
+
+Channel flagging turned on. Details of procedure: 
+	Bandhshape will be smoothened and then normalized.
+	Normalized bandshape will be used to detect RFI.
+	20 channels will be used as window length for smoothing
+	CutOff to RMS ratio: 2.5
+
+Time flagging turned on. Details of procedure: 
+	2-D time-frequency data will be normalized using smoothened bandshape before filtering
+	20 channels will be used as window length for smoothing
+	Histogram based algorithm selected.
+	CutOff to RMS ratio: 3
+
+Filtered data will have a rescaled mean of 8192
+
+Flagged samples will be replaced by modal value of zero DM time series.
+Inside display(), Raw file path: /data/gpuuser/NSM/01feb/5am/BM.raw.0
+
+
+--------------------------------------------

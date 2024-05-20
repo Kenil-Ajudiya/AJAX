@@ -205,6 +205,7 @@ private:
 
 Runtime::Runtime(Information info_, int nBeams_)
 {
+	cout << "Inside RunTime(Information info_, int nBeams_) Constructor." << endl;
 	nActions = 4;
 	nBeams = nBeams_;
 	nBeamsTemp = nBeams;
@@ -265,6 +266,7 @@ Runtime::Runtime(Information info_, int nBeams_)
 	AcquireData::info = info;
 	AcquireData::curPos = long((info.startTime / info.samplingInterval)) * info.noOfChannels * info.noOfPol * info.sampleSizeBytes;
 	AcquireData::info.startTime = long(info.startTime / info.blockSizeSec) * info.blockSizeSec;
+	cout << "Inside RunTime() constructor, info.filepath is: " << info.filepath << endl;
 	info.display();
 
 	threadPacket = new ThreadPacket *[nActions * nBeams];
@@ -1286,6 +1288,7 @@ int main(int argc, char *argv[])
 		case 'f':
 		{
 			info.filepath = optarg;
+			cout << "\n\n\ninfo.filepath read from the comand line: " << info.filepath << endl;
 			info.doReadFromFile = 1;
 		}
 		break;
@@ -1313,7 +1316,7 @@ int main(int argc, char *argv[])
 		case 'I':
 		{
 			info.shmID = info.stringToDouble(optarg);
-			cout << "Reading from SHM." << endl;
+			cout << "\n\n\nReading from SHM." << endl;
 			info.doReadFromFile = 0;
 		}
 		break;

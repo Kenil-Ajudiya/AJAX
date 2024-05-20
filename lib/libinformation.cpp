@@ -81,6 +81,7 @@ double Information::stringToDouble(const std::string &s)
  *******************************************************************/
 void Information::readAjaxInputFile()
 {
+	cout << "Inside readAjaxInputFile()." << endl;
 	char *fileparstr = "ajax.in";
 	string line;
 	int k = 1, CompleteFlag = 0;
@@ -112,9 +113,11 @@ void Information::readAjaxInputFile()
 		}
 		switch (k)
 		{
+
 		case 1:
 		case 2:
 		case 3:
+			break;
 		case 4:
 		{
 			modeOperation = tempStr;
@@ -136,6 +139,7 @@ void Information::readAjaxInputFile()
 		}
 		case 7:
 		case 8:
+			break;
 		case 9:
 		{
 			lowestFrequency = stringToDouble(tempStr);
@@ -169,6 +173,7 @@ void Information::readAjaxInputFile()
 		}
 		case 14:
 		case 15:
+			break;
 		case 16:
 		{
 			pulsarName = tempStr;
@@ -190,6 +195,7 @@ void Information::readAjaxInputFile()
 		}
 		case 19:
 		case 20:
+			break;
 		case 21:
 		{
 			periodInSamples = (int)stringToDouble(tempStr);
@@ -217,6 +223,7 @@ void Information::readAjaxInputFile()
 		}
 		case 26:
 		case 27:
+			break;
 		case 28:
 		{
 			polarChanToDisplay = char(int(stringToDouble(tempStr)));
@@ -238,6 +245,7 @@ void Information::readAjaxInputFile()
 		}
 		case 32:
 		case 33:
+			break;
 		case 34:
 		{
 			startChannel = int(stringToDouble(tempStr));
@@ -265,6 +273,7 @@ void Information::readAjaxInputFile()
 		}
 		case 39:
 		case 40:
+			break;
 		case 41:
 		{
 			doTimeFlag = char(int(stringToDouble(tempStr)));
@@ -287,6 +296,7 @@ void Information::readAjaxInputFile()
 		}
 		case 45:
 		case 46:
+			break;
 		case 47:
 		{
 			smoothingWindowLength = int(stringToDouble(tempStr));
@@ -304,6 +314,7 @@ void Information::readAjaxInputFile()
 		}
 		case 50:
 		case 51:
+			break;
 		case 52:
 		{
 			doWriteChanFlags = char(int(stringToDouble(tempStr)));
@@ -315,28 +326,30 @@ void Information::readAjaxInputFile()
 			break;
 		}
 		case 54:
-			// {
-			// 	doWriteFiltered2D = char(int(stringToDouble(tempStr)));
-			// 	break;
-			// }
-			// case 55:
-			// {
-			// 	doWriteFullDM = char(int(stringToDouble(tempStr)));
-			// 	break;
-			// }
-			// case 56:
-			// case 57:
-			// case 58:
-			// {
-			// 	nBadChanBlocks = char(int(stringToDouble(tempStr)));
-			// 	break;
-			// }
-			// case 59:
-			// case 60:
-			// {
-			// 	parseManFlagList(tempStr);
-			// 	break;
-			// }
+		{
+			doWriteFiltered2D = char(int(stringToDouble(tempStr)));
+			break;
+		}
+		case 55:
+		{
+			doWriteFullDM = char(int(stringToDouble(tempStr)));
+			break;
+		}
+		case 56:
+		case 57:
+			break;
+		case 58:
+		{
+			nBadChanBlocks = char(int(stringToDouble(tempStr)));
+			break;
+		}
+		case 59:
+			break;
+		case 60:
+		{
+			parseManFlagList(tempStr);
+			break;
+		}
 
 		default:
 		{
@@ -364,69 +377,70 @@ void Information::readAjaxInputFile()
 
 	//	calculateCutoff();
 	errorChecks();
+	cout << "Exiting readAjaxInputFile()." << endl;
 }
 
-// void Information::parseManFlagList(std::string &s)
-// {
-// 	int p = 0;
-// 	int i = 0;
-// 	int p1, p2, p3;
-// 	int slen = s.length();
-// 	badChanBlocks = new int[nBadChanBlocks * 2];
-// 	while (p < slen)
-// 	{
-// 		if (i >= nBadChanBlocks)
-// 		{
-// 			cout << "Error in line 60 of ajax.in" << endl;
-// 			cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
-// 			exit(0);
-// 		}
-// 		if (s[p] == '[')
-// 			p1 = p;
-// 		else
-// 		{
-// 			cout << "Error in line 60 of ajax.in" << endl;
-// 			cout << "Expected [ to mark the start of a bad sub-band" << endl;
-// 			exit(0);
-// 		}
-// 		while (s[++p] != ',' && s[p] != '[' && s[p] != ']' && p < slen)
-// 			;
-// 		if (s[p] == ',')
-// 			p2 = p;
-// 		else
-// 		{
-// 			cout << "Error in line 60 of ajax.in" << endl;
-// 			cout << "Expected ," << endl;
-// 			exit(0);
-// 		}
-// 		while (s[++p] != ']' && p < slen)
-// 			;
-// 		if (s[p] == ']')
-// 			p3 = p;
-// 		else
-// 		{
-// 			cout << "Error in line 60 of ajax.in" << endl;
-// 			cout << "Expected ] to mark the start of a bad sub-band" << endl;
-// 			exit(0);
-// 		}
-// 		if (++p < slen && s[p] != ',')
-// 		{
-// 			cout << "Error in line 60 of ajax.in" << endl;
-// 			cout << "Expected , between list of sub-bands" << endl;
-// 			exit(0);
-// 		}
-// 		p++;
-// 		badChanBlocks[i * 2] = int(stringToDouble(s.substr(p1 + 1, p2 - p1 - 1)));
-// 		badChanBlocks[i * 2 + 1] = int(stringToDouble(s.substr(p2 + 1, p3 - p2 - 1)));
-// 		i++;
-// 	}
-// 	if (i < nBadChanBlocks)
-// 	{
-// 		cout << "Error in line 60 of ajax.in" << endl;
-// 		cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
-// 		exit(0);
-// 	}
-// }
+void Information::parseManFlagList(std::string &s)
+{
+	int p = 0;
+	int i = 0;
+	int p1, p2, p3;
+	int slen = s.length();
+	badChanBlocks = new int[nBadChanBlocks * 2];
+	while (p < slen)
+	{
+		if (i >= nBadChanBlocks)
+		{
+			cout << "Error in line 60 of ajax.in" << endl;
+			cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
+			exit(0);
+		}
+		if (s[p] == '[')
+			p1 = p;
+		else
+		{
+			cout << "Error in line 60 of ajax.in" << endl;
+			cout << "Expected [ to mark the start of a bad sub-band" << endl;
+			exit(0);
+		}
+		while (s[++p] != ',' && s[p] != '[' && s[p] != ']' && p < slen)
+			;
+		if (s[p] == ',')
+			p2 = p;
+		else
+		{
+			cout << "Error in line 60 of ajax.in" << endl;
+			cout << "Expected ," << endl;
+			exit(0);
+		}
+		while (s[++p] != ']' && p < slen)
+			;
+		if (s[p] == ']')
+			p3 = p;
+		else
+		{
+			cout << "Error in line 60 of ajax.in" << endl;
+			cout << "Expected ] to mark the start of a bad sub-band" << endl;
+			exit(0);
+		}
+		if (++p < slen && s[p] != ',')
+		{
+			cout << "Error in line 60 of ajax.in" << endl;
+			cout << "Expected , between list of sub-bands" << endl;
+			exit(0);
+		}
+		p++;
+		badChanBlocks[i * 2] = int(stringToDouble(s.substr(p1 + 1, p2 - p1 - 1)));
+		badChanBlocks[i * 2 + 1] = int(stringToDouble(s.substr(p2 + 1, p3 - p2 - 1)));
+		i++;
+	}
+	if (i < nBadChanBlocks)
+	{
+		cout << "Error in line 60 of ajax.in" << endl;
+		cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
+		exit(0);
+	}
+}
 
 void Information::fillParams()
 {
@@ -455,65 +469,56 @@ void Information::fillParams()
 
 void Information::errorChecks()
 {
+	cout << "Inside errorChecks()." << endl;
 	char erFlag = 0;
 	if (doReadFromFile == 1)
 	{
 		ifstream testExistance;
 		char *zero = "0";
 		testExistance.open(strcat(filepath, zero));
+		cout << "Inside errorChecks(), filepath is: " << filepath << endl;
 		if (!testExistance.is_open())
 		{
-			cout << "No file with name: " << strcat(filepath, zero) << endl;
+			cout << "No file with name: " << filepath << endl;
 			erFlag = 1;
 		}
 	}
+
 	if (doPolarMode != 0 && doPolarMode != 1)
 	{
 		cout << "Error in line 5 of ajax.in:" << endl
 			 << "Polarization mode must be either 0 for for Intensity or 1 for full stokes" << endl;
 		erFlag = 1;
 	}
-	if (doPolarMode && polarChanToDisplay > 3)
-	{
-		cout << "Error in line 28 of ajax.in:" << endl;
-		cout << "Polarization channel to display must be between 0 and 3 OR -1 to display all four channels" << endl;
-		erFlag = 1;
-	}
+
 	if (sampleSizeBytes != 1 && sampleSizeBytes != 2 && sampleSizeBytes != 4)
 	{
 		cout << "Error in line 6 of ajax.in:" << endl
 			 << "The tool can only process 1 or 2 byte integer or 4 byte float." << endl;
 		erFlag = 1;
 	}
+
 	if (sidebandFlag != 0 && sidebandFlag != 1)
 	{
 		cout << "Error in line 11 of ajax.in:" << endl
 			 << "-1 for decreasing channel ordering, +1 for increasing." << endl;
 		erFlag = 1;
 	}
-	if (!doFixedPeriodFolding || dispersionMeasure < 0)
-	{
-		getPsrcatdbPath();
-		checkPulsarName();
-	}
-	if (periodInSamples == 0)
-	{
-		cout << "Error in 21 of ajax.in:" << endl
-			 << "Number of bins in folded profile must be positive definite." << endl;
-		erFlag = 1;
-	}
+
 	if (profileOffset > 1 || profileOffset < 0)
 	{
 		cout << "Error in 22 of ajax.in:" << endl
 			 << "Pulsar phase offset must be between 0 and 1" << endl;
 		erFlag = 1;
 	}
+
 	if (doManualMode != 0 && doManualMode != 1)
 	{
 		cout << "Error in line 30 of  ajax.in:" << endl
 			 << "0 for automatic update and 1 for manual update." << endl;
 		erFlag = 1;
 	}
+
 	if (startChannel > noOfChannels)
 	{
 		cout << "Error in line 34 of  ajax.in:" << endl
@@ -604,24 +609,28 @@ void Information::errorChecks()
 			 << "1 to use cumulative smooth bandshape, 2 to use externally supplied bandshape.dat." << endl;
 		erFlag = 1;
 	}
+
 	if (doReplaceByMean != 0 && doReplaceByMean != 1 && doReplaceByMean != 2)
 	{
 		cout << "Error in line 49 of  ajax.in:" << endl
 			 << "0 to replace by zeros, 1 to replace flagged points by modal (median) value, 2 to replace by smooth bandshape" << endl;
 		erFlag = 1;
 	}
+
 	if (doReplaceByMean == 1 && doUseNormalizedData != 1)
 	{
 		cout << "Invalid combination of choices in line 42 and 49." << endl
 			 << "Data must be normalized to replace by modal (median) values.";
 		erFlag = 1;
 	}
+
 	if (doReplaceByMean == 1 && doTimeFlag != 1)
 	{
 		cout << "Invalid combination of choices in line 41 and 49." << endl
 			 << "Time filtering must be on to replace by modal (median) values.";
 		erFlag = 1;
 	}
+
 	if (normalizationProcedure == 2)
 	{
 		ifstream testExistance;
@@ -632,51 +641,54 @@ void Information::errorChecks()
 			erFlag = 1;
 		}
 	}
+
 	if (doWriteFullDM != 0 && doWriteFullDM != 1)
 	{
 		cout << "Error in line 55 of  ajax.in:" << endl
 			 << "1 to write dedispersed time series, 0 otherwise." << endl;
 		erFlag = 1;
 	}
+
 	if (doWriteFiltered2D != 0 && doWriteFiltered2D != 1)
 	{
 		cout << "Error in line 54 of  ajax.in:" << endl
 			 << "1 to write 2D time-frequency data, 0 otherwise." << endl;
 		erFlag = 1;
 	}
-	if (doWriteFiltered2D && !doTimeFlag)
+
+	if (nBadChanBlocks != 0) // For some reason, this is True!!! Madness!!!
 	{
-		cout << "Filtered 2D data can be written out only if time filtering is turned on. If you want to do frequency only filtering, then you can turn on time filtering and set a very large n-sigma threshold" << endl;
-		erFlag = 1;
+		cout << "nBadChanBlocks is: " << nBadChanBlocks << endl;
+		for (int i = 0; i < nBadChanBlocks; i++)
+		{
+			if (badChanBlocks[i * 2] < 0 || badChanBlocks[i * 2 + 1] < 0)
+			{
+				cout << "Error in line 60 of ajax.in" << endl;
+				cout << "In sub-band " << i + 1 << ": channel number cannot be less than zero." << endl;
+				erFlag = 1;
+			}
+			if (badChanBlocks[i * 2] > noOfChannels || badChanBlocks[i * 2 + 1] > noOfChannels)
+			{
+				cout << "Error in line 60 of ajax.in" << endl;
+				cout << "In sub-band " << i + 1 << ": channel number cannot be greater than the number of channels." << endl;
+				erFlag = 1;
+			}
+			if (badChanBlocks[i * 2] >= badChanBlocks[i * 2 + 1])
+			{
+				cout << "Error in line 60 of ajax.in" << endl;
+				cout << "In sub-band " << i + 1 << ": end channel must be strictly greater than start channel." << endl;
+				erFlag = 1;
+			}
+		}
 	}
-	// if (nBadChanBlocks != 0)	// For some reason, this is True!!! Madness!!!
-	// {
-	// 	for (int i = 0; i < nBadChanBlocks; i++)
-	// 	{
-	// 		if (badChanBlocks[i * 2] < 0 || badChanBlocks[i * 2 + 1] < 0)
-	// 		{
-	// 			cout << "Error in line 60 of ajax.in" << endl;
-	// 			cout << "In sub-band " << i + 1 << ": channel number cannot be less than zero." << endl;
-	// 			erFlag = 1;
-	// 		}
-	// 		if (badChanBlocks[i * 2] > noOfChannels || badChanBlocks[i * 2 + 1] > noOfChannels)
-	// 		{
-	// 			cout << "Error in line 60 of ajax.in" << endl;
-	// 			cout << "In sub-band " << i + 1 << ": channel number cannot be greater than the number of channels." << endl;
-	// 			erFlag = 1;
-	// 		}
-	// 		if (badChanBlocks[i * 2] >= badChanBlocks[i * 2 + 1])
-	// 		{
-	// 			cout << "Error in line 60 of ajax.in" << endl;
-	// 			cout << "In sub-band " << i + 1 << ": end channel must be strictly greater than start channel." << endl;
-	// 			erFlag = 1;
-	// 		}
-	// 	}
-	// }
+
 	if (erFlag == 1)
 	{
+		cout << "Exiting errorChecks() because of some error." << endl;
 		exit(0);
 	}
+
+	cout << "Exiting errorChecks() because no errors found." << endl;
 }
 
 void Information::calculateCutoff()
@@ -857,6 +869,7 @@ void Information::checkPulsarName()
  *******************************************************************/
 void Information::display()
 {
+	cout << "Inside display()." << endl;
 	stringstream displays;
 	displays << endl
 			 << "ajax ver 4.6 (optimized for Band-4 FRB detection)" << endl;
@@ -891,7 +904,7 @@ void Information::display()
 	displays << endl
 			 << "Number of channels excluded at start: " << startChannel * freqIntFactor << endl;
 	displays << "Number of channels excluded at end: " << (noOfChannels - stopChannel) * freqIntFactor << endl;
-	
+
 	if (nBadChanBlocks != 0)
 	{
 		displays << endl
@@ -1008,11 +1021,10 @@ void Information::display()
 	if (!doReadFromFile)
 		displays << "Taking data from shared memory" << endl;
 	else
-	{
-		char *zero = "0";
-		displays << "Raw file path: " << strcat(filepath, zero) << endl;
-	}
+		displays << "Inside display(), Raw file path: " << filepath << endl;
+
 	cout << "displays.str().c_str()" << displays.str().c_str() << endl;
+
 	time_t now = time(0);
 	// convert now to string form
 	char *dt = ctime(&now);
@@ -1021,6 +1033,7 @@ void Information::display()
 	f << displays.str().c_str() << endl
 	  << endl;
 	f << "--------------------------------------------" << endl;
+	cout << "Exiting display()." << endl;
 }
 
 /*******************************************************************
