@@ -21,61 +21,61 @@ double Information::stringToDouble(const std::string &s)
  *Checks if the ajax.in file is latest version or not.
  *returns 1 if latest version otherwise returns 0.
  *******************************************************************/
-void Information::reformatAjaxInputFile()
-{
-	system("cp ajax.in ajax.in.oldver");
-	char *fileparstr = "ajax.in";
-	string line;
-	string lineTimeFlags, lineChanFlags, linefullDM;
-	int k = 1, CompleteFlag = 0;
-	ifstream filepar(fileparstr, ios::in);
-	stringstream fileOutput;
-	fileOutput << "#*#*#ajax input file v2.0#*#*#" << endl;
-	fileOutput << "-------------------------------------------------" << endl;
-	while (getline(filepar, line))
-	{
-		if ((k > 2 && k < 56))
-			fileOutput << line << endl;
+// void Information::reformatAjaxInputFile()
+// {
+// 	system("cp ajax.in ajax.in.oldver");
+// 	char *fileparstr = "ajax.in";
+// 	string line;
+// 	string lineTimeFlags, lineChanFlags, linefullDM;
+// 	int k = 1, CompleteFlag = 0;
+// 	ifstream filepar(fileparstr, ios::in);
+// 	stringstream fileOutput;
+// 	fileOutput << "#*#*#ajax input file v2.0#*#*#" << endl;
+// 	fileOutput << "-------------------------------------------------" << endl;
+// 	while (getline(filepar, line))
+// 	{
+// 		if ((k > 2 && k < 56))
+// 			fileOutput << line << endl;
 
-		k++;
-	}
-	filepar.close();
-	fileOutput << "-------------------------------------------------" << endl;
-	fileOutput << "#****manual flagging options****#" << endl;
-	fileOutput << "0		: Number of bad channel blocks" << endl;
-	fileOutput << "List: 		#in next line, example: [200,400],[1200,1400]" << endl;
-	fileOutput << "" << endl;
+// 		k++;
+// 	}
+// 	filepar.close();
+// 	fileOutput << "-------------------------------------------------" << endl;
+// 	fileOutput << "#****manual flagging options****#" << endl;
+// 	fileOutput << "0		: Number of bad channel blocks" << endl;
+// 	fileOutput << "List: 		#in next line, example: [200,400],[1200,1400]" << endl;
+// 	fileOutput << "" << endl;
 
-	ofstream newInFile(fileparstr, ios::out);
-	newInFile << fileOutput.str().c_str();
-	newInFile.close();
-}
+// 	ofstream newInFile(fileparstr, ios::out);
+// 	newInFile << fileOutput.str().c_str();
+// 	newInFile.close();
+// }
 
 /*******************************************************************
  *FUNCTION: short int Information::checkAjaxInputFileVersion()
  *Checks if the ajax.in file is latest version or not.
  *returns 1 if latest version otherwise returns 0.
  *******************************************************************/
-short int Information::checkAjaxInputFileVersion()
-{
-	char *fileparstr = "ajax.in";
-	string firstline;
-	string newfirstline = "#*#*#ajax input file v2.0#*#*#";
-	int k = 1, CompleteFlag = 0;
-	ifstream filepar(fileparstr, ios::in);
-	if (!filepar.is_open())
-	{
-		cout << "ajax.in not found!" << endl;
-		cout << "A sample ajax.in file has been written to the current directory." << endl;
-		writeWpmonIn();
-		exit(0);
-	}
-	getline(filepar, firstline);
-	if (firstline.compare(newfirstline) == 0)
-		return 1;
-	else
-		return 0;
-}
+// short int Information::checkAjaxInputFileVersion()
+// {
+// 	char *fileparstr = "ajax.in";
+// 	string firstline;
+// 	string newfirstline = "#************AJAX input file************#";
+// 	int k = 1, CompleteFlag = 0;
+// 	ifstream filepar(fileparstr, ios::in);
+// 	if (!filepar.is_open())
+// 	{
+// 		cout << "ajax.in not found!" << endl;
+// 		cout << "A sample ajax.in file has been written to the current directory." << endl;
+// 		writeWpmonIn();
+// 		exit(0);
+// 	}
+// 	getline(filepar, firstline);
+// 	if (firstline.compare(newfirstline) == 0)
+// 		return 1;
+// 	else
+// 		return 0;
+// }
 
 /*******************************************************************
  *FUNCTION: void Information::readAjaxInputFile()
@@ -326,19 +326,19 @@ void Information::readAjaxInputFile()
 			doWriteFullDM = char(int(stringToDouble(tempStr)));
 			break;
 		}
-		case 56:
-		case 57:
-		case 58:
-		{
-			nBadChanBlocks = char(int(stringToDouble(tempStr)));
-			break;
-		}
-		case 59:
-		case 60:
-		{
-			parseManFlagList(tempStr);
-			break;
-		}
+			// case 56:
+			// case 57:
+			// case 58:
+			// {
+			// 	nBadChanBlocks = char(int(stringToDouble(tempStr)));
+			// 	break;
+			// }
+			// case 59:
+			// case 60:
+			// {
+			// 	parseManFlagList(tempStr);
+			// 	break;
+			// }
 
 		default:
 		{
@@ -368,67 +368,67 @@ void Information::readAjaxInputFile()
 	errorChecks();
 }
 
-void Information::parseManFlagList(std::string &s)
-{
-	int p = 0;
-	int i = 0;
-	int p1, p2, p3;
-	int slen = s.length();
-	badChanBlocks = new int[nBadChanBlocks * 2];
-	while (p < slen)
-	{
-		if (i >= nBadChanBlocks)
-		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
-			exit(0);
-		}
-		if (s[p] == '[')
-			p1 = p;
-		else
-		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected [ to mark the start of a bad sub-band" << endl;
-			exit(0);
-		}
-		while (s[++p] != ',' && s[p] != '[' && s[p] != ']' && p < slen)
-			;
-		if (s[p] == ',')
-			p2 = p;
-		else
-		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected ," << endl;
-			exit(0);
-		}
-		while (s[++p] != ']' && p < slen)
-			;
-		if (s[p] == ']')
-			p3 = p;
-		else
-		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected ] to mark the start of a bad sub-band" << endl;
-			exit(0);
-		}
-		if (++p < slen && s[p] != ',')
-		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected , between list of sub-bands" << endl;
-			exit(0);
-		}
-		p++;
-		badChanBlocks[i * 2] = int(stringToDouble(s.substr(p1 + 1, p2 - p1 - 1)));
-		badChanBlocks[i * 2 + 1] = int(stringToDouble(s.substr(p2 + 1, p3 - p2 - 1)));
-		i++;
-	}
-	if (i < nBadChanBlocks)
-	{
-		cout << "Error in line 60 of ajax.in" << endl;
-		cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
-		exit(0);
-	}
-}
+// void Information::parseManFlagList(std::string &s)
+// {
+// 	int p = 0;
+// 	int i = 0;
+// 	int p1, p2, p3;
+// 	int slen = s.length();
+// 	badChanBlocks = new int[nBadChanBlocks * 2];
+// 	while (p < slen)
+// 	{
+// 		if (i >= nBadChanBlocks)
+// 		{
+// 			cout << "Error in line 60 of ajax.in" << endl;
+// 			cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
+// 			exit(0);
+// 		}
+// 		if (s[p] == '[')
+// 			p1 = p;
+// 		else
+// 		{
+// 			cout << "Error in line 60 of ajax.in" << endl;
+// 			cout << "Expected [ to mark the start of a bad sub-band" << endl;
+// 			exit(0);
+// 		}
+// 		while (s[++p] != ',' && s[p] != '[' && s[p] != ']' && p < slen)
+// 			;
+// 		if (s[p] == ',')
+// 			p2 = p;
+// 		else
+// 		{
+// 			cout << "Error in line 60 of ajax.in" << endl;
+// 			cout << "Expected ," << endl;
+// 			exit(0);
+// 		}
+// 		while (s[++p] != ']' && p < slen)
+// 			;
+// 		if (s[p] == ']')
+// 			p3 = p;
+// 		else
+// 		{
+// 			cout << "Error in line 60 of ajax.in" << endl;
+// 			cout << "Expected ] to mark the start of a bad sub-band" << endl;
+// 			exit(0);
+// 		}
+// 		if (++p < slen && s[p] != ',')
+// 		{
+// 			cout << "Error in line 60 of ajax.in" << endl;
+// 			cout << "Expected , between list of sub-bands" << endl;
+// 			exit(0);
+// 		}
+// 		p++;
+// 		badChanBlocks[i * 2] = int(stringToDouble(s.substr(p1 + 1, p2 - p1 - 1)));
+// 		badChanBlocks[i * 2 + 1] = int(stringToDouble(s.substr(p2 + 1, p3 - p2 - 1)));
+// 		i++;
+// 	}
+// 	if (i < nBadChanBlocks)
+// 	{
+// 		cout << "Error in line 60 of ajax.in" << endl;
+// 		cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
+// 		exit(0);
+// 	}
+// }
 
 void Information::fillParams()
 {
@@ -484,7 +484,8 @@ void Information::errorChecks()
 	if (doReadFromFile == 1)
 	{
 		ifstream testExistance;
-		testExistance.open(filepath);
+		char *zero = "0";
+		testExistance.open(strcat(filepath, zero));
 		if (!testExistance.is_open())
 		{
 			cout << "No file with name: " << filepath << endl;
@@ -673,30 +674,30 @@ void Information::errorChecks()
 		cout << "Filtered 2D data can be written out only if time filtering is turned on. If you want to do frequency only filtering, then you can turn on time filtering and set a very large n-sigma threshold" << endl;
 		erFlag = 1;
 	}
-	if (nBadChanBlocks != 0)
-	{
-		for (int i = 0; i < nBadChanBlocks; i++)
-		{
-			if (badChanBlocks[i * 2] < 0 || badChanBlocks[i * 2 + 1] < 0)
-			{
-				cout << "Error in line 60 of ajax.in" << endl;
-				cout << "In sub-band " << i + 1 << ": channel number cannot be less than zero." << endl;
-				erFlag = 1;
-			}
-			if (badChanBlocks[i * 2] > noOfChannels || badChanBlocks[i * 2 + 1] > noOfChannels)
-			{
-				cout << "Error in line 60 of ajax.in" << endl;
-				cout << "In sub-band " << i + 1 << ": channel number cannot be greater than the number of channels." << endl;
-				erFlag = 1;
-			}
-			if (badChanBlocks[i * 2] >= badChanBlocks[i * 2 + 1])
-			{
-				cout << "Error in line 60 of ajax.in" << endl;
-				cout << "In sub-band " << i + 1 << ": end channel must be strictly greater than start channel." << endl;
-				erFlag = 1;
-			}
-		}
-	}
+	// if (nBadChanBlocks != 0)	// For some reason, this is True!!! Madness!!!
+	// {
+	// 	for (int i = 0; i < nBadChanBlocks; i++)
+	// 	{
+	// 		if (badChanBlocks[i * 2] < 0 || badChanBlocks[i * 2 + 1] < 0)
+	// 		{
+	// 			cout << "Error in line 60 of ajax.in" << endl;
+	// 			cout << "In sub-band " << i + 1 << ": channel number cannot be less than zero." << endl;
+	// 			erFlag = 1;
+	// 		}
+	// 		if (badChanBlocks[i * 2] > noOfChannels || badChanBlocks[i * 2 + 1] > noOfChannels)
+	// 		{
+	// 			cout << "Error in line 60 of ajax.in" << endl;
+	// 			cout << "In sub-band " << i + 1 << ": channel number cannot be greater than the number of channels." << endl;
+	// 			erFlag = 1;
+	// 		}
+	// 		if (badChanBlocks[i * 2] >= badChanBlocks[i * 2 + 1])
+	// 		{
+	// 			cout << "Error in line 60 of ajax.in" << endl;
+	// 			cout << "In sub-band " << i + 1 << ": end channel must be strictly greater than start channel." << endl;
+	// 			erFlag = 1;
+	// 		}
+	// 	}
+	// }
 	if (erFlag == 1)
 	{
 		exit(0);
@@ -1115,7 +1116,7 @@ void Information::display()
 		displays << "Taking data from shared memory" << endl;
 	else
 		displays << "Raw file path: " << filepath << endl;
-	cout << displays.str().c_str();
+	cout << "displays.str().c_str()" << displays.str().c_str() << endl;
 	time_t now = time(0);
 	// convert now to string form
 	char *dt = ctime(&now);

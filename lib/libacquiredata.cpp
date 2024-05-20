@@ -1,23 +1,23 @@
 #include <AcquireData.h>
 
 // Declaring static variables:
-Information 	AcquireData::info;
-long int 		AcquireData::eof;
-DasHdrType*		AcquireData::dataHdr;
-DataBufType*	AcquireData::dataBuffer;
-DataTabType*	AcquireData::dataTab;
-GlobalInfoType*	AcquireData::dataBufferProcess;
-unsigned short*	AcquireData::zeros;
-int 			AcquireData::recNum = 0;
-int 			AcquireData::remainingData = 0;
-int 			AcquireData::currentReadBlock = 0;
-long int 		AcquireData::curPos = 0;
-double 			AcquireData::totalError = 0.0;
-float 			AcquireData::buffSizeSec;
-int 			AcquireData::nbuff;
-long int 		AcquireData::bufferBlockLengthProcess;
-struct timeval*	AcquireData::startTimeStamp;
-Correlator*		AcquireData::shmInterface;
+Information AcquireData::info;
+long int AcquireData::eof;
+DasHdrType *AcquireData::dataHdr;
+DataBufType *AcquireData::dataBuffer;
+DataTabType *AcquireData::dataTab;
+GlobalInfoType *AcquireData::dataBufferProcess;
+unsigned short *AcquireData::zeros;
+int AcquireData::recNum = 0;
+int AcquireData::remainingData = 0;
+int AcquireData::currentReadBlock = 0;
+long int AcquireData::curPos = 0;
+double AcquireData::totalError = 0.0;
+float AcquireData::buffSizeSec;
+int AcquireData::nbuff;
+long int AcquireData::bufferBlockLengthProcess;
+struct timeval *AcquireData::startTimeStamp;
+Correlator *AcquireData::shmInterface;
 
 /*******************************************************************
  *CONSTRUCTOR: AcquireData::AcquireData(Information _info)
@@ -35,7 +35,8 @@ AcquireData::AcquireData(Information _info)
 	if (info.doReadFromFile)
 	{
 		ifstream datafile;
-		datafile.open(info.filepath, ios::binary);
+		char *zero = "0";
+		datafile.open(strcat(info.filepath, zero), ios::binary);
 		if (!datafile.is_open())
 		{
 			cout << "Raw data file not found!" << endl;
@@ -293,6 +294,8 @@ void AcquireData::readDataFromMultipleFiles(int iBeam)
 	long int blockSizeBytes = nChannel * info.noOfPol * blockLength * info.sampleSizeBytes; // Number of bytes to read in each block	// Number of bytes that have already been read
 
 	ifstream datafile;
+	cout << "Inside readDataFromMultipleFiles():" << endl;
+	cout << "Input filepath" << info.filepath + to_string(iBeam) << endl;
 	datafile.open(info.filepath + to_string(iBeam), ios::binary);
 	datafile.seekg(curPos, ios::beg);
 	// logic to handle reading last block

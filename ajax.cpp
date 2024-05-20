@@ -1454,12 +1454,12 @@ int main(int argc, char *argv[])
 		break;
 		}
 	}
-	if (!info.checkAjaxInputFileVersion())
-	{
-		cout << "Old version of ajax.in file found.\n Replacing by new version formatting.\n Old version copied to ajax.in.oldver" << endl;
-		cout << "Note this conversion will fail if the oldversion is not ver 1.5" << endl;
-		info.reformatAjaxInputFile();
-	}
+	// if (!info.checkAjaxInputFileVersion())
+	// {
+	// 	cout << "Old version of ajax.in file found.\n Replacing by new version formatting.\n Old version copied to ajax.in.oldver" << endl;
+	// 	cout << "Note this conversion will fail if the oldversion is not ver 1.5" << endl;
+	// 	info.reformatAjaxInputFile();
+	// }
 	info.readAjaxInputFile();
 
 	startFlags = new char[info.startChannel];
