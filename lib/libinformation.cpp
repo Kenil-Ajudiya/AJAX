@@ -315,15 +315,15 @@ void Information::readAjaxInputFile()
 			break;
 		}
 		case 54:
-		// {
-		// 	doWriteFiltered2D = char(int(stringToDouble(tempStr)));
-		// 	break;
-		// }
-		// case 55:
-		// {
-		// 	doWriteFullDM = char(int(stringToDouble(tempStr)));
-		// 	break;
-		// }
+			// {
+			// 	doWriteFiltered2D = char(int(stringToDouble(tempStr)));
+			// 	break;
+			// }
+			// case 55:
+			// {
+			// 	doWriteFullDM = char(int(stringToDouble(tempStr)));
+			// 	break;
+			// }
 			// case 56:
 			// case 57:
 			// case 58:
@@ -450,29 +450,6 @@ void Information::fillParams()
 		string temp = filepath;
 		int slashpos = temp.find_last_of("/");
 		filename = temp.substr(slashpos + 1);
-	}
-	if (doWriteFiltered2D)
-	{
-		if (doReadFromFile)
-		{
-			stringstream hdrCpyCommand;
-			if (outputfilepath.empty())
-				outputfilepath = filepath;
-			else
-			{
-				stringstream filenameStream;
-				filenameStream << outputfilepath << "/" << filename;
-				outputfilepath = filenameStream.str().c_str();
-			}
-			hdrCpyCommand << "cp " << filepath << ".hdr " << outputfilepath << ".gpt.hdr" << endl;
-			system(hdrCpyCommand.str().c_str());
-		}
-		else
-		{
-			stringstream filenameStream;
-			filenameStream << outputfilepath;
-			outputfilepath = filenameStream.str().c_str();
-		}
 	}
 }
 
@@ -880,38 +857,15 @@ void Information::checkPulsarName()
  *******************************************************************/
 void Information::display()
 {
-
 	stringstream displays;
 	displays << endl
 			 << "ajax ver 4.6 (optimized for Band-4 FRB detection)" << endl;
 	if (doFilteringOnly)
 		displays << "FILTERING ONLY MODE" << endl
 				 << endl;
-	if (isInline)
-		displays << "INLINE MODE - read from and write to a shared memory" << endl;
 	if (doFRB)
 		displays << "INLINE MODE for FRB pipeline - read from and write to a shared memory" << endl;
 	displays << "Mode of operation: " << modeOperation << endl;
-	if (doPolarMode)
-	{
-		displays << "Polarization mode ON" << endl;
-		if (polarChanToDisplay == -1)
-			displays << "All polarizations will be displayed" << endl;
-		else
-			displays << "Only polarization chan " << int(polarChanToDisplay) << " will be displayed" << endl;
-	}
-	switch (sampleSizeBytes)
-	{
-	case 1:
-		displays << "Input data is sampled as 1 byte integers" << endl;
-		break;
-	case 2:
-		displays << "Input data is sampled as 2 byte integers" << endl;
-		break;
-	case 4:
-		displays << "Input data is sampled as 4 byte floating point numbers." << endl;
-		break;
-	}
 
 	displays << endl
 			 << "Lowest frequency :" << lowestFrequency << " MHz" << endl;
@@ -924,35 +878,6 @@ void Information::display()
 	displays << "Number of channels: " << noOfChannels * freqIntFactor << endl;
 	displays << "Sampling interval :" << samplingInterval * 1000.0 / timeIntFactor << " ms" << endl;
 
-	if (!doFilteringOnly)
-	{
-
-		displays << endl
-				 << "Pulsar: " << pulsarName << endl;
-
-		displays << "Pulsar period: " << setprecision(12) << periodInMs << " ms" << endl;
-		displays << "Dispersion measure: " << setprecision(10) << dispersionMeasure << " pc/cc" << endl;
-
-		/*if(refFrequency)
-			cout<<endl<<"Dedispersion will be done with respect to the highest frequency."<<endl;
-		else
-			cout<<"Dedispersion will be done with respect to the lowest frequency."<<endl; */
-		displays << "Number of bins in folded profile: " << periodInSamples << endl;
-		displays << "Phase of pulsar profile will be offset by " << profileOffset << endl;
-		if (!doFixedPeriodFolding)
-		{
-			if (doUseTempo2)
-				displays << "Polyco based folding to be performed using tempo2." << endl;
-			else
-				displays << "Polyco based folding to be performed using tempo1." << endl;
-			displays << "MJD of observation is " << setprecision(20) << MJDObs << endl;
-			displays << "Number of coefficients generated for each span: " << nCoeffPolyco << endl;
-			displays << "Validity of each span: " << spanPolyco << " mins" << endl;
-			displays << "Maximum Hour Angle: " << maxHA << endl;
-		}
-		else
-			displays << "Fixed period folding to be performed." << endl;
-	}
 	displays << endl;
 	if (isInline or doFRB)
 		displays << "Display window size has been adjusted to accomodate integer multiples of shared memory buffer" << endl;
@@ -1055,10 +980,10 @@ void Information::display()
 		{
 			if (timeFlagAlgo == 1)
 				displays << endl
-						 << "Flagged samples will be replaced by modal value of zero DM time series.";
+						 << "Flagged samples will be replaced by modal value of zero DM time series." << endl;
 			else if (timeFlagAlgo == 2)
 				displays << endl
-						 << "Flagged samples will be replaced by median value of zero DM time series.";
+						 << "Flagged samples will be replaced by median value of zero DM time series." << endl;
 		}
 		else
 			displays << endl
@@ -1070,11 +995,6 @@ void Information::display()
 		displays << "Flag output to timeflag.gpt" << endl;
 	if (doZeroDMSub == 1)
 		displays << "Appropiately scaled version of the zero DM time series will be subtracted to minimize the rms of each spectral channel." << endl;
-	if (doWriteFiltered2D)
-	{
-		displays << endl
-				 << "Filtered 2D raw data output to " << outputfilepath << ".gpt" << endl;
-	}
 	if (freqIntFactor > 1)
 	{
 		displays << endl
@@ -1091,25 +1011,6 @@ void Information::display()
 		displays << "Final sampling interval :" << samplingInterval * 1000.0 << " ms." << endl;
 	}
 
-	/*if(doTimeFlag && doChanFlag)
-	{
-		if(flagOrder==1)
-			cout<<endl<<"Channel filtering will be done first."<<endl;
-		else if(flagOrder==2)
-			cout<<"Time filtering will be done first."<<endl;
-		else if(flagOrder==3)
-			cout<<"Time & channel filtering will be done independent of each other."<<endl;
-		cout<<endl;
-	}*/
-
-	if (doWriteFullDM)
-		displays << "Dedispersed time series will be written out" << endl
-				 << endl;
-
-	if (doRunFilteredMode)
-		displays << endl
-				 << "WARNING : ajax run in readback mode. Inputs in lines 36,41,42,48 & 54 were overridden." << endl
-				 << endl;
 	if (!doReadFromFile)
 		displays << "Taking data from shared memory" << endl;
 	else
