@@ -891,6 +891,7 @@ void Information::display()
 	displays << endl
 			 << "Number of channels excluded at start: " << startChannel * freqIntFactor << endl;
 	displays << "Number of channels excluded at end: " << (noOfChannels - stopChannel) * freqIntFactor << endl;
+	
 	if (nBadChanBlocks != 0)
 	{
 		displays << endl
@@ -898,7 +899,6 @@ void Information::display()
 		for (int i = 0; i < nBadChanBlocks; i++)
 			displays << "Sub-band " << i + 1 << " : chan # " << badChanBlocks[i * 2] << " to " << badChanBlocks[i * 2 + 1] << endl;
 	}
-
 	if (doChanFlag)
 	{
 		displays << endl
@@ -922,12 +922,6 @@ void Information::display()
 			displays << "\tMean to rms bandshape as well as normalized bandshape will be used to detect RFI." << endl;
 			break;
 		}
-		/*
-		if(chanFlagAlgo==1)
-			cout<<"\tHistogram based algorithm selected."<<endl;
-		else if(chanFlagAlgo==2)
-			cout<<"\tMAD based algorithm selected."<<endl;
-		*/
 		displays << "\tCutOff to RMS ratio: " << chanCutOffToRMS << endl;
 	}
 	else
@@ -973,7 +967,6 @@ void Information::display()
 		displays << endl
 				 << "No time flagging will be performed." << endl;
 	}
-
 	if (doTimeFlag && doChanFlag)
 	{
 		if (doReplaceByMean)
@@ -989,6 +982,7 @@ void Information::display()
 			displays << endl
 					 << "Flagged samples will be ignored" << endl;
 	}
+
 	if (doChanFlag && doWriteChanFlags)
 		displays << "Flag output to chanflag.gpt" << endl;
 	if (doTimeFlag && doWriteTimeFlags)
