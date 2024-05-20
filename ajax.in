@@ -46,7 +46,7 @@ B1133-64  	: Pulsar name
 #****Other options****#
 20		    : Smoothing window size for bandshape normalization (in number of channels)
 1		    : Normalization procedure (1-> cumulative smooth bandshape, 2-> externally supplied bandshape.dat)
-0		    : Replace by median values (0-> Ignore flagged samples, 1-> Replace flagged samples by window median, 2-> Replace by smooth bandshape)
+2		    : Replace by median values (0-> Ignore flagged samples, 1-> Replace flagged samples by window median, 2-> Replace by smooth bandshape)
 -------------------------------------------------
 #****I/O options****#
 0		    : Write channel flag file (0-> no,1-> yes)

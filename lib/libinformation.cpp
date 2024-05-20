@@ -36,7 +36,6 @@ double Information::stringToDouble(const std::string &s)
 // 	{
 // 		if ((k > 2 && k < 56))
 // 			fileOutput << line << endl;
-
 // 		k++;
 // 	}
 // 	filepar.close();
@@ -45,7 +44,6 @@ double Information::stringToDouble(const std::string &s)
 // 	fileOutput << "0		: Number of bad channel blocks" << endl;
 // 	fileOutput << "List: 		#in next line, example: [200,400],[1200,1400]" << endl;
 // 	fileOutput << "" << endl;
-
 // 	ofstream newInFile(fileparstr, ios::out);
 // 	newInFile << fileOutput.str().c_str();
 // 	newInFile.close();
@@ -317,15 +315,15 @@ void Information::readAjaxInputFile()
 			break;
 		}
 		case 54:
-		{
-			doWriteFiltered2D = char(int(stringToDouble(tempStr)));
-			break;
-		}
-		case 55:
-		{
-			doWriteFullDM = char(int(stringToDouble(tempStr)));
-			break;
-		}
+		// {
+		// 	doWriteFiltered2D = char(int(stringToDouble(tempStr)));
+		// 	break;
+		// }
+		// case 55:
+		// {
+		// 	doWriteFullDM = char(int(stringToDouble(tempStr)));
+		// 	break;
+		// }
 			// case 56:
 			// case 57:
 			// case 58:
@@ -488,7 +486,7 @@ void Information::errorChecks()
 		testExistance.open(strcat(filepath, zero));
 		if (!testExistance.is_open())
 		{
-			cout << "No file with name: " << filepath << endl;
+			cout << "No file with name: " << strcat(filepath, zero) << endl;
 			erFlag = 1;
 		}
 	}
@@ -1115,7 +1113,10 @@ void Information::display()
 	if (!doReadFromFile)
 		displays << "Taking data from shared memory" << endl;
 	else
-		displays << "Raw file path: " << filepath << endl;
+	{
+		char *zero = "0";
+		displays << "Raw file path: " << strcat(filepath, zero) << endl;
+	}
 	cout << "displays.str().c_str()" << displays.str().c_str() << endl;
 	time_t now = time(0);
 	// convert now to string form

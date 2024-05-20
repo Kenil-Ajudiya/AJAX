@@ -436,129 +436,33 @@ void Runtime::writeFlagStats(ThreadPacket *threadPacket)
 
 void Runtime::intializeFiles()
 {
-	if (info.doWriteFiltered2D)
+	if (info.doWriteChanFlags && info.doChanFlag)
 	{
-		ostringstream filename;
-		filename << info.outputfilepath << ".gpt";
-		ofstream filtered2DFile;
-		filtered2DFile.open(filename.str().c_str(), ios::out | ios::trunc);
-		if (filtered2DFile.fail())
-		{
-			cout << endl
-				 << "ERROR: Cannot create outputfile. Possible permission issues?" << endl;
-			exit(1);
-		}
-		filtered2DFile.close();
+		ofstream chanflagfile;
+		chanflagfile.open("chanflag.gpt", ios::out | ios::trunc);
+		chanflagfile.close();
+	}
+	if (info.doWriteTimeFlags && info.doTimeFlag)
+	{
+		ofstream timeflagfile;
+		timeflagfile.open("timeflag.gpt", ios::out | ios::trunc);
+		timeflagfile.close();
 	}
 
-	if (!info.doPolarMode)
-	{
+	ofstream statFile;
+	statFile.open("stats.gpt", ios::out | ios::trunc);
+	statFile << "#window_indx\tmean_pred\tmean_pre\tmean_post\trms_pred\trms_pre\trms_post\tm/r_pred\tm/r_pre\tm/r_post" << endl;
+	statFile.close();
 
-		if (info.doWriteChanFlags && info.doChanFlag)
-		{
-			ofstream chanflagfile;
-			chanflagfile.open("chanflag.gpt", ios::out | ios::trunc);
-			chanflagfile.close();
-		}
-		if (info.doWriteTimeFlags && info.doTimeFlag)
-		{
-			ofstream timeflagfile;
-			timeflagfile.open("timeflag.gpt", ios::out | ios::trunc);
-			timeflagfile.close();
-		}
-		if (info.doWriteFullDM && !info.doFilteringOnly)
-		{
+	ofstream intensityFile;
+	intensityFile.open("intensity_summary.gpt", ios::out | ios::trunc);
+	intensityFile << "#First element of each line denotes the number of time samples in the block, followed by intensity in each channel" << endl;
+	intensityFile.close();
 
-			ofstream fullDMfile;
-			fullDMfile.open("fullDM_filtered.gpt", ios::out | ios::trunc);
-			fullDMfile.close();
-
-			ofstream fullDMUnfilteredfile;
-			fullDMUnfilteredfile.open("fullDM_unfiltered.gpt", ios::out | ios::trunc);
-			fullDMUnfilteredfile.close();
-
-			ofstream fullDMCountfile;
-			fullDMCountfile.open("fullDMCount.gpt", ios::out | ios::trunc);
-			fullDMCountfile.close();
-		}
-
-		ofstream statFile;
-		statFile.open("stats.gpt", ios::out | ios::trunc);
-		statFile << "#window_indx\tmean_pred\tmean_pre\tmean_post\trms_pred\trms_pre\trms_post\tm/r_pred\tm/r_pre\tm/r_post" << endl;
-		statFile.close();
-
-		ofstream intensityFile;
-		intensityFile.open("intensity_summary.gpt", ios::out | ios::trunc);
-		intensityFile << "#First element of each line denotes the number of time samples in the block, followed by intensity in each channel" << endl;
-		intensityFile.close();
-
-		ofstream flagStatFile;
-		flagStatFile.open("flag_stats.gpt", ios::out | ios::trunc);
-		flagStatFile << "#Each line represents a seperate block. For the particular block, the line contains the percentage of flagged data in each channel" << endl;
-		flagStatFile.close();
-	}
-	else
-	{
-		for (int k = 0; k < info.noOfPol; k++)
-		{
-			ostringstream filename;
-			if (info.doWriteChanFlags && info.doChanFlag)
-			{
-				filename << "chanflag" << k + 1 << ".gpt";
-				ofstream chanflagfile;
-				chanflagfile.open(filename.str().c_str(), ios::out | ios::trunc);
-				chanflagfile.close();
-			}
-			if (info.doWriteTimeFlags && info.doTimeFlag)
-			{
-				filename.str("");
-				filename.clear();
-				filename << "timeflag" << k + 1 << ".gpt";
-				ofstream timeflagfile;
-				timeflagfile.open(filename.str().c_str(), ios::out | ios::trunc);
-				timeflagfile.close();
-			}
-			if (info.doWriteFullDM && !info.doFilteringOnly)
-			{
-				filename.str("");
-				filename.clear();
-				filename << "fullDM_filtered" << k + 1 << ".gpt";
-				ofstream fullDMfile;
-				fullDMfile.open(filename.str().c_str(), ios::out | ios::trunc);
-				fullDMfile.close();
-
-				filename.str("");
-				filename.clear();
-				filename << "fullDM_unfiltered" << k + 1 << ".gpt";
-				ofstream fullDMUnfilteredfile;
-				fullDMUnfilteredfile.open(filename.str().c_str(), ios::out | ios::trunc);
-				fullDMUnfilteredfile.close();
-
-				filename.str("");
-				filename.clear();
-				filename << "fullDMCount" << k + 1 << ".gpt";
-				ofstream fullDMCountfile;
-				fullDMCountfile.open(filename.str().c_str(), ios::out | ios::trunc);
-				fullDMCountfile.close();
-			}
-
-			filename.str("");
-			filename.clear();
-			filename << "stats" << k + 1 << ".gpt";
-			ofstream statFile;
-			statFile.open(filename.str().c_str(), ios::out | ios::trunc);
-			statFile << "#window_index(1)\tmean_pred(2)\tmean_pre(3)\tmean_post(4)\trms_pred(5)\trms_pre(6)\trms_post(7)\tm/r_pred(8)\tm/r_pre(9)\tm/r_post(10)" << endl;
-			statFile.close();
-
-			filename.str("");
-			filename.clear();
-			filename << "intensity_summary" << k + 1 << ".gpt";
-			ofstream intensityFile;
-			intensityFile.open(filename.str().c_str(), ios::out | ios::trunc);
-			intensityFile << "#First element of each line denotes the number of time samples in the block, followed by intensity in each channel";
-			intensityFile.close();
-		}
-	}
+	ofstream flagStatFile;
+	flagStatFile.open("flag_stats.gpt", ios::out | ios::trunc);
+	flagStatFile << "#Each line represents a seperate block. For the particular block, the line contains the percentage of flagged data in each channel" << endl;
+	flagStatFile.close();
 }
 
 void Runtime::writeAll(ThreadPacket *threadPacket)
@@ -1476,13 +1380,13 @@ int main(int argc, char *argv[])
 	act.sa_handler = intHandler;
 	sigaction(SIGINT, &act, NULL);
 
-	#pragma omp parallel sections
+#pragma omp parallel sections
 	{
-		#pragma omp section
+#pragma omp section
 		{
 			runtime->action(0, 0);
 		}
-		#pragma omp section
+#pragma omp section
 		{
 			runtime->fillPipe();
 			double loopTime = omp_get_wtime(); // benchmark
