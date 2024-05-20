@@ -656,7 +656,7 @@ void Information::errorChecks()
 		erFlag = 1;
 	}
 
-	if (nBadChanBlocks != 0) // For some reason, this is True!!! Madness!!!
+	if (nBadChanBlocks != 0)
 	{
 		cout << "nBadChanBlocks is: " << nBadChanBlocks << endl;
 		for (int i = 0; i < nBadChanBlocks; i++)
