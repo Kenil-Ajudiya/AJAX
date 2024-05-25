@@ -37,7 +37,7 @@ AcquireData::AcquireData(Information _info)
 	{
 		cout << "Inside AcquireData() Constructor, info.filepath is: " << info.filepath << endl;
 		ifstream datafile;
-		datafile.open(info.filepath, ios::binary);
+		datafile.open(info.filepath + to_string(0), ios::binary);
 		if (!datafile.is_open())
 		{
 			cout << "Raw data file not found!" << endl;
@@ -296,16 +296,16 @@ void AcquireData::readDataFromMultipleFiles(int iBeam)
 
 	ifstream datafile;
 	cout << "Inside readDataFromMultipleFiles():" << endl;
-	if (iBeam != 0)
-	{
-		cout << "File to be opened when iBeam != 0 is: " << info.filepath + to_string(iBeam) << endl;
-		datafile.open(info.filepath + to_string(iBeam), ios::binary);
-	}
-	else
-	{
-		cout << "File to be opened when iBeam == 0 is: " << info.filepath << endl;
-		datafile.open(info.filepath, ios::binary);
-	}
+	// if (iBeam != 0)
+	// {
+	cout << "File to be read is: " << info.filepath + to_string(iBeam) << endl;
+	datafile.open(info.filepath + to_string(iBeam), ios::binary);
+	// }
+	// else
+	// {
+	// 	cout << "File to be opened when iBeam == 0 is: " << info.filepath << endl;
+	// 	datafile.open(info.filepath, ios::binary);
+	// }
 	datafile.seekg(curPos, ios::beg);
 	// logic to handle reading last block
 	if (curPos + blockSizeBytes > eof)

@@ -461,7 +461,7 @@ void Information::fillParams()
 		writeInfFile();
 	if (doReadFromFile)
 	{
-		string temp = filepath;
+		string temp = filepath + to_string(0);
 		int slashpos = temp.find_last_of("/");
 		filename = temp.substr(slashpos + 1);
 	}
@@ -474,8 +474,7 @@ void Information::errorChecks()
 	if (doReadFromFile == 1)
 	{
 		ifstream testExistance;
-		char *zero = "0";
-		testExistance.open(strcat(filepath, zero));
+		testExistance.open(filepath + to_string(0));
 		cout << "Inside errorChecks(), filepath is: " << filepath << endl;
 		if (!testExistance.is_open())
 		{
@@ -721,7 +720,7 @@ void Information::genMJDObs()
 	string command, linehdr;
 	ostringstream headerName;
 	if (doReadFromFile == 1) // Read from file
-		headerName << filepath << ".hdr";
+		headerName << filepath + to_string(0) << ".hdr";
 	else // Real Time
 		headerName << "timestamp.gpt";
 	ifstream headerFile(headerName.str().c_str(), ios::in);

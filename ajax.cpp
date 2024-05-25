@@ -178,7 +178,7 @@ public:
 	Correlator *shmInterface;
 	int nbuff;
 
-	Runtime(Information info_, int nBeams_);
+	Runtime(Information info_, int nParallel_);
 	~Runtime();
 	void intializeFiles();
 	void fillPipe();
@@ -189,7 +189,7 @@ public:
 
 private:
 	int nActions;
-	int nBeams, nBeamsTemp;
+	int nParallel, nParallelTemp;
 	char chanFirst;
 	char hasReachedEof;
 
@@ -203,12 +203,12 @@ private:
 	void writeFlagStats(ThreadPacket *threadPacket);
 };
 
-Runtime::Runtime(Information info_, int nBeams_)
+Runtime::Runtime(Information info_, int nParallel_)
 {
-	cout << "Inside RunTime(Information info_, int nBeams_) Constructor." << endl;
+	cout << "Inside RunTime(Information info_, int nParallel_) Constructor." << endl;
 	nActions = 4;
-	nBeams = nBeams_;
-	nBeamsTemp = nBeams;
+	nParallel = nParallel_;
+	nParallelTemp = nParallel;
 	info = info_;
 	AcquireData *acquireData = new AcquireData(info);
 
@@ -269,9 +269,14 @@ Runtime::Runtime(Information info_, int nBeams_)
 	cout << "Inside RunTime() constructor, info.filepath is: " << info.filepath << endl;
 	info.display();
 
-	threadPacket = new ThreadPacket *[nActions * nBeams];
-	for (int i = 0; i < nActions * nBeams; i++)
+	cout << "Attempting to define threadPacket = new ThreadPacket *[nActions * nParallel];." << endl;
+	threadPacket = new ThreadPacket *[nActions * nParallel];
+	cout << "threadPacket = new ThreadPacket *[nActions * nParallel]; defined successfully." << endl;
+
+	for (int i = 0; i < nActions * nParallel; i++)
 		threadPacket[i] = new ThreadPacket(info.noOfPol);
+
+	cout << "All threadPacket[i] initialised successfully." << endl;
 
 	centralpass0 = new float[info.noOfPol];
 	centralpass1 = new float[info.noOfPol];
@@ -302,15 +307,23 @@ Runtime::Runtime(Information info_, int nBeams_)
 	else
 		totalBlocks = totalBlocksNoOff = 0;
 
+	cout << "After if (info.doReadFromFile){} else {}." << endl;
+
 	if (info.smoothFlagWindowLength > 0)
 		info.smoothFlagWindowLength = (int)(info.smoothFlagWindowLength / info.samplingInterval);
 	info.concentrationThreshold = 1.0 - info.concentrationThreshold / 100.0;
+
+	cout << "Before for (int k = 0; k < info.noOfPol; k++)." << endl;
+
 	for (int k = 0; k < info.noOfPol; k++)
 	{
 		if (!info.doFilteringOnly)
-			threadPacket[(nActions - 1) * nBeams]->advancedAnalysisOld[k] = new AdvancedAnalysis(info);
+			threadPacket[(nActions - 1) * nParallel]->advancedAnalysisOld[k] = new AdvancedAnalysis(info);
 		threadPacket[nActions - 1]->basicAnalysis[k] = new BasicAnalysis(info);
+		cout << "In for (int k = 0; k < info.noOfPol; k++), k = " << k << endl;
 	}
+
+	cout << "After for (int k = 0; k < info.noOfPol; k++)." << endl;
 
 	blankTimeFlags = new char[info.blockSizeSamples + 1];
 	blankChanFlags = new char[info.stopChannel - info.startChannel];
@@ -325,8 +338,8 @@ Runtime::Runtime(Information info_, int nBeams_)
 	chanFirst = 0;
 	if ((info.doTimeFlag && info.doChanFlag && (info.flagOrder == 1)) || info.doUseNormalizedData || info.doChanFlag)
 		chanFirst = 1;
-	// cout<<"Reached end of Runtime()"<<endl; //DEBUG
-	// omp_set_num_threads(2+3*nBeams);
+	cout << "Reached end of Runtime()" << endl; // DEBUG
+												// omp_set_num_threads(2+3*nParallel);
 
 	// omp_set_dynamic(0);
 }
@@ -341,11 +354,10 @@ Runtime::~Runtime()
 
 void Runtime::displayBlockIndex(int blockIndex)
 {
-
 	if (info.doReadFromFile)
-		cout << '\r' << "Block:" << (blockIndex)-nActions * nBeams + 1 << " of " << totalBlocks << std::flush;
+		cout << '\r' << "Block:" << (blockIndex)-nActions * nParallel + 1 << " of " << totalBlocks << std::flush;
 	else
-		cout << '\r' << "Block:" << (blockIndex)-nActions * nBeams + 1 << std::flush;
+		cout << '\r' << "Block:" << (blockIndex)-nActions * nParallel + 1 << std::flush;
 }
 
 void Runtime::testStatistics(ThreadPacket *threadPacket)
@@ -505,8 +517,8 @@ void Runtime::fillPipe()
 #pragma omp parallel for schedule(dynamic, 1)
 		for (int j = 1; j < k + 1; j++)
 		{
-			//	cout<<j*nBeams<<","<<j<<endl;
-			action(j * nBeams, j);
+			//	cout<<j*nParallel<<","<<j<<endl;
+			action(j * nParallel, j);
 		}
 
 		while (!readCompleteFlag)
@@ -515,22 +527,22 @@ void Runtime::fillPipe()
 		{
 			for (int ipol = 0; ipol < info.noOfPol; ipol++)
 			{
-				memcpy(cumulativeBandpass[ipol], threadPacket[4 * nBeams - 1]->basicAnalysis[ipol]->smoothBandshape, info.noOfChannels * sizeof(float));
+				memcpy(cumulativeBandpass[ipol], threadPacket[4 * nParallel - 1]->basicAnalysis[ipol]->smoothBandshape, info.noOfChannels * sizeof(float));
 			}
 		}
-		for (int i = 0; i < nBeams; i++)
-			threadPacket[0 + i]->copySelect(threadPacket[(nActions - 1) * nBeams + i]);
+		for (int i = 0; i < nParallel; i++)
+			threadPacket[0 + i]->copySelect(threadPacket[(nActions - 1) * nParallel + i]);
 
-		for (int i = (nActions - 1) * nBeams - 1; i >= 0; i--)
-			threadPacket[i + nBeams]->copy(threadPacket[i]);
+		for (int i = (nActions - 1) * nParallel - 1; i >= 0; i--)
+			threadPacket[i + nParallel]->copy(threadPacket[i]);
 
 		readCompleteFlag = 0;
 		readDoneFlag = 1;
-		blockIndex += nBeams;
+		blockIndex += nParallel;
 	}
 
-	threadPacket[(nActions - 1) * nBeams]->advancedAnalysisOld = threadPacket[nBeams - 1]->advancedAnalysis;
-	fillTime = (omp_get_wtime() - fillTime) / (nBeams * nActions); // benchmark
+	threadPacket[(nActions - 1) * nParallel]->advancedAnalysisOld = threadPacket[nParallel - 1]->advancedAnalysis;
+	fillTime = (omp_get_wtime() - fillTime) / (nParallel * nActions); // benchmark
 }
 
 void Runtime::loopThrough()
@@ -541,95 +553,54 @@ void Runtime::loopThrough()
 	benchmarkfile.open("benchmark_threadtime_indv.gpt", ios::out | ios::trunc);
 	while (!hasReachedEof)
 	{
-		numberOfThreadRuns += nBeams;
+		numberOfThreadRuns += nParallel;
 		startTime = omp_get_wtime();
 		timeNet = omp_get_wtime();
 
-		if (!info.doFilteringOnly) // full mode of ajax
-		{
-#pragma omp parallel sections
-			{
-#pragma omp section
-				{
-					time1 = omp_get_wtime();
-					timeThread1 -= omp_get_wtime();
-					action(1 * nBeams, 1);
-					action(0, -1);
-					timeThread1 += omp_get_wtime();
-					time1 = omp_get_wtime() - time1;
-				}
-#pragma omp section
-				{
-					time2 = omp_get_wtime();
-					timeThread2 -= omp_get_wtime();
-					action(2 * nBeams, 2);
-					timeThread2 += omp_get_wtime();
-					time2 = omp_get_wtime() - time2;
-				}
-#pragma omp section
-				{
-					time3 = omp_get_wtime();
-					timeThread3 -= omp_get_wtime();
-					action(3 * nBeams, 3);
-					timeThread3 += omp_get_wtime();
-					time3 = omp_get_wtime() - time3;
-				}
-#pragma omp section
-				{
-					time4 = omp_get_wtime();
-					timeThread4 -= omp_get_wtime();
-					action(4 * nBeams, 4);
-					timeThread4 += omp_get_wtime();
-					time4 = omp_get_wtime() - time4;
-				}
-			}
-		}
-		else
-		{
 #pragma omp parallel sections // filtering only mode of ajax
+		{
+#pragma omp section
 			{
+				time1 = omp_get_wtime();
+				timeThread1 -= omp_get_wtime();
+				action(1 * nParallel, 1);
+				timeThread1 += omp_get_wtime();
+				time1 = omp_get_wtime() - time1;
+			}
 #pragma omp section
-				{
-					time1 = omp_get_wtime();
-					timeThread1 -= omp_get_wtime();
-					action(1 * nBeams, 1);
-					timeThread1 += omp_get_wtime();
-					time1 = omp_get_wtime() - time1;
-				}
+			{
+				time2 = omp_get_wtime();
+				timeThread2 -= omp_get_wtime();
+				action(2 * nParallel, 2);
+				timeThread2 += omp_get_wtime();
+				time2 = omp_get_wtime() - time2;
+			}
 #pragma omp section
-				{
-					time2 = omp_get_wtime();
-					timeThread2 -= omp_get_wtime();
-					action(2 * nBeams, 2);
-					timeThread2 += omp_get_wtime();
-					time2 = omp_get_wtime() - time2;
-				}
-#pragma omp section
-				{
-					time3 = omp_get_wtime();
-					timeThread3 -= omp_get_wtime();
-					action(3 * nBeams, 3);
-					timeThread3 += omp_get_wtime();
-					time3 = omp_get_wtime() - time3;
-				}
+			{
+				time3 = omp_get_wtime();
+				timeThread3 -= omp_get_wtime();
+				action(3 * nParallel, 3);
+				timeThread3 += omp_get_wtime();
+				time3 = omp_get_wtime() - time3;
 			}
 		}
+
 		while (!readCompleteFlag)
 			;
 
 		for (int ipol = 0; ipol < info.noOfPol; ipol++)
-			memcpy(cumulativeBandpass[ipol], threadPacket[4 * nBeams - 1]->basicAnalysis[ipol]->smoothBandshape, info.noOfChannels * sizeof(float));
+			memcpy(cumulativeBandpass[ipol], threadPacket[4 * nParallel - 1]->basicAnalysis[ipol]->smoothBandshape, info.noOfChannels * sizeof(float));
 
-		for (int i = 0; i < nBeams; i++)
+		for (int i = 0; i < nParallel; i++)
 			threadPacket[i]->freeMem();
 
-		for (int i = 0; i < nBeams; i++)
-			threadPacket[0 + i]->copySelect(threadPacket[(nActions - 1) * nBeams + i]);
+		for (int i = 0; i < nParallel; i++)
+			threadPacket[0 + i]->copySelect(threadPacket[(nActions - 1) * nParallel + i]);
 
-		for (int i = (nActions - 1) * nBeams - 1; i >= 0; i--)
-			threadPacket[i + nBeams]->copy(threadPacket[i]);
+		for (int i = (nActions - 1) * nParallel - 1; i >= 0; i--)
+			threadPacket[i + nParallel]->copy(threadPacket[i]);
 
-		threadPacket[(nActions - 1) * nBeams]->advancedAnalysisOld = threadPacket[nBeams - 1]->advancedAnalysis;
+		threadPacket[(nActions - 1) * nParallel]->advancedAnalysisOld = threadPacket[nParallel - 1]->advancedAnalysis;
 
 		readCompleteFlag = 0;
 		readDoneFlag = 1;
@@ -644,9 +615,9 @@ void Runtime::loopThrough()
 			while (omp_get_wtime() - startTime < info.blockSizeSec)
 				;
 		timeNet = omp_get_wtime() - timeNet;
-		benchmarkfile << blockIndex << " " << timeP / nBeams << " " << time0 / nBeams << " " << time1 / nBeams << " " << time2 / nBeams << " " << time3 / nBeams << " " << time4 / nBeams << endl;
+		benchmarkfile << blockIndex << " " << timeP / nParallel << " " << time0 / nParallel << " " << time1 / nParallel << " " << time2 / nParallel << " " << time3 / nParallel << " " << time4 / nParallel << endl;
 
-		blockIndex += nBeams;
+		blockIndex += nParallel;
 	}
 	benchmarkfile.close();
 }
@@ -655,7 +626,7 @@ void Runtime::quickclosePipe()
 {
 	cout << endl
 		 << "Closing pipe.." << endl;
-	for (int k = 0; k < nBeamsTemp; k++)
+	for (int k = 0; k < nParallelTemp; k++)
 	{
 		displayBlockIndex(blockIndex + k);
 		writeAll(threadPacket[k]);
@@ -668,7 +639,7 @@ void Runtime::quickclosePipe()
 			ostringstream filename;
 			ostringstream filenameUnfiltered;
 			filename << "bandshape" << k + 1 << ".gpt";
-			threadPacket[nBeamsTemp - 1]->basicAnalysisWrite[k]->writeBandshape(filename.str().c_str());
+			threadPacket[nParallelTemp - 1]->basicAnalysisWrite[k]->writeBandshape(filename.str().c_str());
 			filename.str("");
 			filename.clear();
 
@@ -676,31 +647,31 @@ void Runtime::quickclosePipe()
 			{
 				filename << "profile_filtered" << k + 1 << ".gpt";
 				filenameUnfiltered << "profile_unfiltered" << k + 1 << ".gpt";
-				threadPacket[nBeamsTemp - 1]->advancedAnalysis[k]->writeProfile(filename.str().c_str(), filenameUnfiltered.str().c_str());
+				threadPacket[nParallelTemp - 1]->advancedAnalysis[k]->writeProfile(filename.str().c_str(), filenameUnfiltered.str().c_str());
 			}
 		}
 	}
 	else
 	{
-		threadPacket[nBeamsTemp - 1]->basicAnalysisWrite[0]->writeBandshape("bandshape.gpt");
+		threadPacket[nParallelTemp - 1]->basicAnalysisWrite[0]->writeBandshape("bandshape.gpt");
 		if (!info.doFilteringOnly)
-			threadPacket[nBeamsTemp - 1]->advancedAnalysis[0]->writeProfile("profile_filtered.gpt", "profile_unfiltered.gpt");
+			threadPacket[nParallelTemp - 1]->advancedAnalysis[0]->writeProfile("profile_filtered.gpt", "profile_unfiltered.gpt");
 	}
-	for (int j = 0; j < nBeams; j++)
+	for (int j = 0; j < nParallel; j++)
 	{
 		for (int i = 0; i < info.noOfPol; i++)
 		{
-			delete threadPacket[2 * nBeams + j]->basicAnalysis[i];
-			delete threadPacket[3 * nBeams + j]->basicAnalysis[i];
-			delete threadPacket[4 * nBeams + j]->basicAnalysis[i];
+			delete threadPacket[2 * nParallel + j]->basicAnalysis[i];
+			delete threadPacket[3 * nParallel + j]->basicAnalysis[i];
+			delete threadPacket[4 * nParallel + j]->basicAnalysis[i];
 
-			if (!threadPacket[3 * nBeams + j]->rFIFilteringChan[i])
-				delete threadPacket[3 * nBeams + j]->rFIFilteringChan[i];
-			if (!threadPacket[4 * nBeams + j]->rFIFilteringChan[i])
-				delete threadPacket[4 * nBeams + j]->rFIFilteringChan[i];
+			if (!threadPacket[3 * nParallel + j]->rFIFilteringChan[i])
+				delete threadPacket[3 * nParallel + j]->rFIFilteringChan[i];
+			if (!threadPacket[4 * nParallel + j]->rFIFilteringChan[i])
+				delete threadPacket[4 * nParallel + j]->rFIFilteringChan[i];
 
-			if (!threadPacket[4 * nBeams + j]->rFIFilteringTime[i])
-				delete threadPacket[4 * nBeams + j]->rFIFilteringTime[i];
+			if (!threadPacket[4 * nParallel + j]->rFIFilteringTime[i])
+				delete threadPacket[4 * nParallel + j]->rFIFilteringTime[i];
 		}
 	}
 	cout << endl;
@@ -708,42 +679,42 @@ void Runtime::quickclosePipe()
 
 void Runtime::closePipe()
 {
-	for (int k = 0; k < nBeams; k++)
+	for (int k = 0; k < nParallel; k++)
 	{
 		displayBlockIndex(blockIndex + k);
 		writeAll(threadPacket[k]);
 	}
-	int temp = nBeams;
-	blockIndex += nBeams;
+	int temp = nParallel;
+	blockIndex += nParallel;
 	for (int i = 1; i < nActions; i++)
 	{
-		nBeams = nBeamsTemp;
+		nParallel = nParallelTemp;
 		action(i * temp, i);
-		nBeams = temp;
+		nParallel = temp;
 		for (int j = i + 1; j < nActions; j++)
 		{
-			action(j * nBeams, j);
+			action(j * nParallel, j);
 		}
 		if (i != nActions - 1) // The last packets is retained in memory to print the final profile from.
 		{
-			for (int j = 0; j < nBeams; j++)
+			for (int j = 0; j < nParallel; j++)
 				threadPacket[j]->freeMem();
 		}
 		// Packet transfers between different operations:
-		for (int j = 0; j < nBeams; j++)
-			threadPacket[0 + j]->copySelect(threadPacket[(nActions - 1) * nBeams + j]);
+		for (int j = 0; j < nParallel; j++)
+			threadPacket[0 + j]->copySelect(threadPacket[(nActions - 1) * nParallel + j]);
 
-		for (int j = (nActions - 1) * nBeams - 1; j >= 0; j--)
-			threadPacket[j + nBeams]->copy(threadPacket[j]);
+		for (int j = (nActions - 1) * nParallel - 1; j >= 0; j--)
+			threadPacket[j + nParallel]->copy(threadPacket[j]);
 
-		threadPacket[(nActions - 1) * nBeams]->advancedAnalysisOld = threadPacket[nBeams - 1]->advancedAnalysis;
+		threadPacket[(nActions - 1) * nParallel]->advancedAnalysisOld = threadPacket[nParallel - 1]->advancedAnalysis;
 
-		for (int k = 0; k < nBeams; k++)
+		for (int k = 0; k < nParallel; k++)
 		{
 			displayBlockIndex(blockIndex + k);
 			writeAll(threadPacket[k]);
 		}
-		blockIndex += nBeams;
+		blockIndex += nParallel;
 	}
 	if (info.doPolarMode)
 	{
@@ -753,7 +724,7 @@ void Runtime::closePipe()
 			ostringstream filename;
 			ostringstream filenameUnfiltered;
 			filename << "bandshape" << k + 1 << ".gpt";
-			threadPacket[nBeamsTemp - 1]->basicAnalysisWrite[k]->writeBandshape(filename.str().c_str());
+			threadPacket[nParallelTemp - 1]->basicAnalysisWrite[k]->writeBandshape(filename.str().c_str());
 			filename.str("");
 			filename.clear();
 
@@ -761,17 +732,17 @@ void Runtime::closePipe()
 			{
 				filename << "profile_filtered" << k + 1 << ".gpt";
 				filenameUnfiltered << "profile_unfiltered" << k + 1 << ".gpt";
-				threadPacket[nBeamsTemp - 1]->advancedAnalysis[k]->writeProfile(filename.str().c_str(), filenameUnfiltered.str().c_str());
+				threadPacket[nParallelTemp - 1]->advancedAnalysis[k]->writeProfile(filename.str().c_str(), filenameUnfiltered.str().c_str());
 			}
 		}
 	}
 	else
 	{
-		threadPacket[nBeamsTemp - 1]->basicAnalysisWrite[0]->writeBandshape("bandshape.gpt");
+		threadPacket[nParallelTemp - 1]->basicAnalysisWrite[0]->writeBandshape("bandshape.gpt");
 		if (!info.doFilteringOnly)
-			threadPacket[nBeamsTemp - 1]->advancedAnalysis[0]->writeProfile("profile_filtered.gpt", "profile_unfiltered.gpt");
+			threadPacket[nParallelTemp - 1]->advancedAnalysis[0]->writeProfile("profile_filtered.gpt", "profile_unfiltered.gpt");
 	}
-	for (int j = 0; j < nBeamsTemp; j++) // free'ing last packets
+	for (int j = 0; j < nParallelTemp; j++) // free'ing last packets
 		threadPacket[j]->freeMem();
 	cout << endl;
 }
@@ -823,7 +794,7 @@ void Runtime::ioTasks(int threadPacketIndex)
 
 		for (int iBeam = 0; iBeam < nBeams; iBeam++)
 		{
-			ThreadPacket *thisThreadPacket = threadPacket[threadPacketIndex + iBeam];
+			ThreadPacket *thisThreadPacket = threadPacket[threadPacketIndex + (iBeam % nParallel)];
 			thisThreadPacket->acquireData = new AcquireData(blockIndex + iBeam);
 
 			readTime = omp_get_wtime();		 // benchmark
@@ -835,7 +806,7 @@ void Runtime::ioTasks(int threadPacketIndex)
 			hasReachedEof = thisThreadPacket->acquireData->hasReachedEof;
 			if (hasReachedEof)
 			{
-				nBeamsTemp = iBeam + 1;
+				nParallelTemp = (iBeam % nParallel) + 1;
 				killFlag = 1;
 				break;
 			}
@@ -843,7 +814,7 @@ void Runtime::ioTasks(int threadPacketIndex)
 		for (int iBeam = 0; iBeam < nBeams; iBeam++)
 		{
 			ThreadPacket *thisThreadPacket = threadPacket[threadPacketIndex + iBeam];
-			if (blockIndex >= nBeams * nActions)
+			if (blockIndex >= nParallel * nActions)
 			{
 				displayBlockIndex(blockIndex + iBeam);
 				writeAll(thisThreadPacket);
@@ -1053,9 +1024,9 @@ void Runtime::timeTasks(int threadPacketIndex, char secondpass)
 		{
 			int t = iParallel * nSerial + iSerial;
 			// cout<<"time thread id:"<<sched_getcpu()<<endl;
-			BasicAnalysis **basicAnalysis = threadPacket[threadPacketIndex + t]->basicAnalysis;
-			RFIFiltering **rFIFilteringChan = threadPacket[threadPacketIndex + t]->rFIFilteringChan;
-			RFIFiltering **rFIFilteringTime = threadPacket[threadPacketIndex + t]->rFIFilteringTime;
+			BasicAnalysis **basicAnalysis = threadPacket[threadPacketIndex + iParallel]->basicAnalysis;
+			RFIFiltering **rFIFilteringChan = threadPacket[threadPacketIndex + iParallel]->rFIFilteringChan;
+			RFIFiltering **rFIFilteringTime = threadPacket[threadPacketIndex + iParallel]->rFIFilteringTime;
 
 			for (int i = 0; i < info.noOfPol; i++)
 			{
@@ -1068,7 +1039,7 @@ void Runtime::timeTasks(int threadPacketIndex, char secondpass)
 				if (info.doChanFlag || (info.doTimeFlag && info.doChanFlag && (info.flagOrder == 1)))
 				{
 					timeZeroDM -= omp_get_wtime(); // benchmark
-					if (blockIndex > 6 * nBeams && secondpass == 0)
+					if (blockIndex > 6 * nParallel && secondpass == 0)
 					{
 						basicAnalysis[i]->computeZeroDMNorm(rFIFilteringChan[i]->flags, cumulativeBandpass[i]);
 					}
@@ -1092,7 +1063,7 @@ void Runtime::timeTasks(int threadPacketIndex, char secondpass)
 					rFIFilteringTime[i]->inputMin = basicAnalysis[i]->minZeroDM;
 
 					// rFIFilteringTime[i]->histogramInterval=histogramInterval[i];
-					if (blockIndex <= 6 * nBeams)
+					if (blockIndex <= 6 * nParallel)
 					{
 
 						rFIFilteringTime[i]->computeStatistics(2);
@@ -1102,7 +1073,7 @@ void Runtime::timeTasks(int threadPacketIndex, char secondpass)
 					if (secondpass == 0)
 					{
 						// cout<<centralpass0[i]<<","<<stdpass0[i]<<endl;
-						if (blockIndex > 6 * nBeams)
+						if (blockIndex > 6 * nParallel)
 						{
 							rFIFilteringTime[i]->centralTendency = centralpass0[i];
 							rFIFilteringTime[i]->rms = stdpass0[i];
@@ -1127,7 +1098,7 @@ void Runtime::timeTasks(int threadPacketIndex, char secondpass)
 					else
 					{
 
-						if (blockIndex > 3 * nBeams)
+						if (blockIndex > 3 * nParallel)
 							rFIFilteringTime[i]->rms = stdpass1[i]; // using earlier estimate of std only for determining histogram interval
 						// rFIFilteringTime[i]->histogramInterval=(4.0*stdpass1[i])/(pow(basicAnalysis[i]->blockLength,1/3.0));
 						rFIFilteringTime[i]->computeStatistics(info.timeFlagAlgo);
@@ -1199,7 +1170,7 @@ void Runtime::timeTasks(int threadPacketIndex, char secondpass)
 			}
 		}
 	}
-	RFIFiltering **rFIFilteringTime = threadPacket[threadPacketIndex + nBeams - 1]->rFIFilteringTime;
+	RFIFiltering **rFIFilteringTime = threadPacket[threadPacketIndex + nParallel - 1]->rFIFilteringTime;
 	for (int i = 0; i < info.noOfPol; i++)
 	{
 		for (int i = 0; i < info.noOfPol; i++)
@@ -1244,7 +1215,6 @@ int main(int argc, char *argv[])
 	info.doFRB = 0;
 	info.shmID = 1;
 	int arg = 1;
-	int nBeams = 5;
 	info.meanval = 8 * 1024; // Hard-coding optimization for Band-4 FRB data
 
 	info.doFlagWidthThreshold = 1;
@@ -1375,14 +1345,17 @@ int main(int argc, char *argv[])
 		startFlags[i] = 1;
 	for (int i = 0; i < info.noOfChannels - info.stopChannel; i++)
 		endFlags[i] = 1;
-	Runtime *runtime = new Runtime(info, nBeams);
-	runtime->intializeFiles();
+	cout << "Attempting to define Runtime *runtime = new RunTime(info, nParallel)." << endl;
+	Runtime *runtime = new Runtime(info, nParallel);
+	cout << "Runtime *runtime = new RunTime(info, nParallel) defined successfully." << endl;
+	// runtime->intializeFiles();
 
 	// code to capture cltr+c termination
 	struct sigaction act;
 	act.sa_handler = intHandler;
 	sigaction(SIGINT, &act, NULL);
 
+	fprintf(stderr, "About to go action(0,0); \n\n");
 #pragma omp parallel sections
 	{
 #pragma omp section
@@ -1402,41 +1375,41 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// writing benchmark files
-	int i = runtime->blockIndex;
-	ofstream benchmarkfile;
-	benchmarkfile.open("benchmark.gpt", ios::app);
-	benchmarkfile << info.samplingInterval << ",";
-	benchmarkfile << info.blockSizeSamples << ",";
-	benchmarkfile << (timeReadData + timeWaitTime) / (float)(i) << ",";
-	benchmarkfile << (timeConvertToFloat) / (float)(i) << ",";
-	benchmarkfile << -timeWaitTime / (float)(i) << ",";
-	benchmarkfile << timeBandshape / (float)(i) << ",";
-	benchmarkfile << timeZeroDM / (float)(i) << ",";
-	benchmarkfile << timeNormalization / (float)(i) << ",";
-	benchmarkfile << timeRFITimeStats / (float)(i) << ",";
-	benchmarkfile << timeRFITimeFlags / (float)(i) << ",";
-	benchmarkfile << timeRFITimeFlagsWrite / (float)(i) << ",";
-	benchmarkfile << timeRFIChanStats / (float)(i) << ",";
-	benchmarkfile << timeRFIChanFlag / (float)(i) << ",";
-	benchmarkfile << timeRFIChanFlagsWrite / (float)(i) << ",";
-	benchmarkfile << timeFullDMCalc / (float)(i) << ",";
-	benchmarkfile << timeFullDMWrite / (float)(i) << ",";
-	benchmarkfile << timeProfileCalc / (float)(i) << ",";
-	benchmarkfile << timeFullDMUnfilteredCalc / (float)(i) << ",";
-	benchmarkfile << timeFullDMUnfilteredWrite / (float)(i) << ",";
-	benchmarkfile << timeProfileUnfilteredCalc / (float)(i) << ",";
-	benchmarkfile.close();
+	// // writing benchmark files
+	// int i = runtime->blockIndex;
+	// ofstream benchmarkfile;
+	// benchmarkfile.open("benchmark.gpt", ios::app);
+	// benchmarkfile << info.samplingInterval << ",";
+	// benchmarkfile << info.blockSizeSamples << ",";
+	// benchmarkfile << (timeReadData + timeWaitTime) / (float)(i) << ",";
+	// benchmarkfile << (timeConvertToFloat) / (float)(i) << ",";
+	// benchmarkfile << -timeWaitTime / (float)(i) << ",";
+	// benchmarkfile << timeBandshape / (float)(i) << ",";
+	// benchmarkfile << timeZeroDM / (float)(i) << ",";
+	// benchmarkfile << timeNormalization / (float)(i) << ",";
+	// benchmarkfile << timeRFITimeStats / (float)(i) << ",";
+	// benchmarkfile << timeRFITimeFlags / (float)(i) << ",";
+	// benchmarkfile << timeRFITimeFlagsWrite / (float)(i) << ",";
+	// benchmarkfile << timeRFIChanStats / (float)(i) << ",";
+	// benchmarkfile << timeRFIChanFlag / (float)(i) << ",";
+	// benchmarkfile << timeRFIChanFlagsWrite / (float)(i) << ",";
+	// benchmarkfile << timeFullDMCalc / (float)(i) << ",";
+	// benchmarkfile << timeFullDMWrite / (float)(i) << ",";
+	// benchmarkfile << timeProfileCalc / (float)(i) << ",";
+	// benchmarkfile << timeFullDMUnfilteredCalc / (float)(i) << ",";
+	// benchmarkfile << timeFullDMUnfilteredWrite / (float)(i) << ",";
+	// benchmarkfile << timeProfileUnfilteredCalc / (float)(i) << ",";
+	// benchmarkfile.close();
 
-	totalTime = omp_get_wtime() - totalTime;
+	// totalTime = omp_get_wtime() - totalTime;
 
-	benchmarkfile.open("benchmark_threadtime.gpt", ios::app);
-	benchmarkfile << nBeams << "," << runtime->info.blockSizeSamples << "," << i << "," << timeThread1 / (float)(numberOfThreadRuns) << "," << timeThread2 / (float)(numberOfThreadRuns) << "," << timeThread3 / (float)(numberOfThreadRuns) << "," << timeThread4 / (float)(numberOfThreadRuns) << "," << timeWaitTime << "," << fillTime << "," << totalTime << endl;
-	benchmarkfile.close();
+	// benchmarkfile.open("benchmark_threadtime.gpt", ios::app);
+	// benchmarkfile << nParallel << "," << runtime->info.blockSizeSamples << "," << i << "," << timeThread1 / (float)(numberOfThreadRuns) << "," << timeThread2 / (float)(numberOfThreadRuns) << "," << timeThread3 / (float)(numberOfThreadRuns) << "," << timeThread4 / (float)(numberOfThreadRuns) << "," << timeWaitTime << "," << fillTime << "," << totalTime << endl;
+	// benchmarkfile.close();
 
-	benchmarkfile.open("benchmark_fillTime.gpt", ios::app);
-	benchmarkfile << nBeams << "," << fillTime << endl;
-	benchmarkfile.close();
+	// benchmarkfile.open("benchmark_fillTime.gpt", ios::app);
+	// benchmarkfile << nParallel << "," << fillTime << endl;
+	// benchmarkfile.close();
 	delete runtime;
 	exit(0);
 }
