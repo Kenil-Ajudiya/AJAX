@@ -1375,41 +1375,41 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// // writing benchmark files
-	// int i = runtime->blockIndex;
-	// ofstream benchmarkfile;
-	// benchmarkfile.open("benchmark.gpt", ios::app);
-	// benchmarkfile << info.samplingInterval << ",";
-	// benchmarkfile << info.blockSizeSamples << ",";
-	// benchmarkfile << (timeReadData + timeWaitTime) / (float)(i) << ",";
-	// benchmarkfile << (timeConvertToFloat) / (float)(i) << ",";
-	// benchmarkfile << -timeWaitTime / (float)(i) << ",";
-	// benchmarkfile << timeBandshape / (float)(i) << ",";
-	// benchmarkfile << timeZeroDM / (float)(i) << ",";
-	// benchmarkfile << timeNormalization / (float)(i) << ",";
-	// benchmarkfile << timeRFITimeStats / (float)(i) << ",";
-	// benchmarkfile << timeRFITimeFlags / (float)(i) << ",";
-	// benchmarkfile << timeRFITimeFlagsWrite / (float)(i) << ",";
-	// benchmarkfile << timeRFIChanStats / (float)(i) << ",";
-	// benchmarkfile << timeRFIChanFlag / (float)(i) << ",";
-	// benchmarkfile << timeRFIChanFlagsWrite / (float)(i) << ",";
-	// benchmarkfile << timeFullDMCalc / (float)(i) << ",";
-	// benchmarkfile << timeFullDMWrite / (float)(i) << ",";
-	// benchmarkfile << timeProfileCalc / (float)(i) << ",";
-	// benchmarkfile << timeFullDMUnfilteredCalc / (float)(i) << ",";
-	// benchmarkfile << timeFullDMUnfilteredWrite / (float)(i) << ",";
-	// benchmarkfile << timeProfileUnfilteredCalc / (float)(i) << ",";
-	// benchmarkfile.close();
+	// writing benchmark files
+	int i = runtime->blockIndex;
+	ofstream benchmarkfile;
+	benchmarkfile.open("benchmark.gpt", ios::app);
+	benchmarkfile << info.samplingInterval << ",";
+	benchmarkfile << info.blockSizeSamples << ",";
+	benchmarkfile << (timeReadData + timeWaitTime) / (float)(i) << ",";
+	benchmarkfile << (timeConvertToFloat) / (float)(i) << ",";
+	benchmarkfile << -timeWaitTime / (float)(i) << ",";
+	benchmarkfile << timeBandshape / (float)(i) << ",";
+	benchmarkfile << timeZeroDM / (float)(i) << ",";
+	benchmarkfile << timeNormalization / (float)(i) << ",";
+	benchmarkfile << timeRFITimeStats / (float)(i) << ",";
+	benchmarkfile << timeRFITimeFlags / (float)(i) << ",";
+	benchmarkfile << timeRFITimeFlagsWrite / (float)(i) << ",";
+	benchmarkfile << timeRFIChanStats / (float)(i) << ",";
+	benchmarkfile << timeRFIChanFlag / (float)(i) << ",";
+	benchmarkfile << timeRFIChanFlagsWrite / (float)(i) << ",";
+	benchmarkfile << timeFullDMCalc / (float)(i) << ",";
+	benchmarkfile << timeFullDMWrite / (float)(i) << ",";
+	benchmarkfile << timeProfileCalc / (float)(i) << ",";
+	benchmarkfile << timeFullDMUnfilteredCalc / (float)(i) << ",";
+	benchmarkfile << timeFullDMUnfilteredWrite / (float)(i) << ",";
+	benchmarkfile << timeProfileUnfilteredCalc / (float)(i) << ",";
+	benchmarkfile.close();
 
-	// totalTime = omp_get_wtime() - totalTime;
+	totalTime = omp_get_wtime() - totalTime;
 
-	// benchmarkfile.open("benchmark_threadtime.gpt", ios::app);
-	// benchmarkfile << nParallel << "," << runtime->info.blockSizeSamples << "," << i << "," << timeThread1 / (float)(numberOfThreadRuns) << "," << timeThread2 / (float)(numberOfThreadRuns) << "," << timeThread3 / (float)(numberOfThreadRuns) << "," << timeThread4 / (float)(numberOfThreadRuns) << "," << timeWaitTime << "," << fillTime << "," << totalTime << endl;
-	// benchmarkfile.close();
+	benchmarkfile.open("benchmark_threadtime.gpt", ios::app);
+	benchmarkfile << nParallel << "," << runtime->info.blockSizeSamples << "," << i << "," << timeThread1 / (float)(numberOfThreadRuns) << "," << timeThread2 / (float)(numberOfThreadRuns) << "," << timeThread3 / (float)(numberOfThreadRuns) << "," << timeThread4 / (float)(numberOfThreadRuns) << "," << timeWaitTime << "," << fillTime << "," << totalTime << endl;
+	benchmarkfile.close();
 
-	// benchmarkfile.open("benchmark_fillTime.gpt", ios::app);
-	// benchmarkfile << nParallel << "," << fillTime << endl;
-	// benchmarkfile.close();
+	benchmarkfile.open("benchmark_fillTime.gpt", ios::app);
+	benchmarkfile << nParallel << "," << fillTime << endl;
+	benchmarkfile.close();
 	delete runtime;
 	exit(0);
 }
