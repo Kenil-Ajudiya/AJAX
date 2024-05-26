@@ -36,9 +36,7 @@ Correlator::Correlator(int _nchan, float _sampling)
 	debug = 1;
 	nchan = _nchan;
 	sampling = _sampling;
-	cout << endl
-		 << endl
-		 << "Output" << nchan << "," << sampling << endl;
+	fprintf(stderr, "\nOutput nchan: %d; sampling: %d\n", nchan, sampling);
 	dataHdrRead = NULL;
 	dataBufferRead = NULL;
 }
@@ -49,31 +47,32 @@ Correlator::Correlator(int _nchan, float _sampling)
  *******************************************************************/
 void Correlator::initializeReadSHM()
 {
-	int iddataHdr, idDataBuffer;
-	iddataHdr = shmget(DAS_H_KEY, sizeof(DasHdrType), 644);
+	fprintf(stderr, "Inside Correlator::initializeReadSHM()\n");
+	int idDataHdr, idDataBuffer;
+	idDataHdr = shmget(DAS_H_KEY, sizeof(DasHdrType), 644);
 	idDataBuffer = shmget(DAS_D_KEY, sizeof(DataBufType), 0);
-	cout << "iddataHdr=" << iddataHdr << endl
-		 << "idDataBuffer=" << idDataBuffer << endl;
+	fprintf(stderr, "idDataHdr: %d\nidDataBuffer: %d\n", idDataHdr, idDataBuffer);
 
-	if (iddataHdr < 0 || iddataHdr < 0)
+	if (idDataHdr < 0 || idDataHdr < 0)
 	{
 		exit(1);
 	}
-	dataHdrRead = (DasHdrType *)shmat(iddataHdr, 0, SHM_RDONLY);
+	dataHdrRead = (DasHdrType *)shmat(idDataHdr, 0, SHM_RDONLY);
 	dataBufferRead = (DataBufType *)shmat(idDataBuffer, 0, SHM_RDONLY);
 	if ((dataBufferRead) == (DataBufType *)-1)
 	{
-		cout << "Cannot attach to shared memory!" << endl;
+		fprintf(stderr, "Cannot attach to SHM!\n");
 		exit(1);
 	}
 	cout << "Attached to shared memory:" << dataHdrRead << "," << dataBufferRead << endl;
 	dataTabRead = dataBufferRead->dtab;
-	cout << "Max no of blocks=" << dataBufferRead->maxblocks << endl;
+	fprintf(stderr, "Max no. of blocks: %d\n", dataBufferRead->maxblocks);
 
-	/*   find a block, two blocks before the current block of the shm for reading data */
+	// find a block, two blocks before the current block of the shm for reading data
 	// if(dataBuffer->cur_rec > (dataBuffer->maxblocks)/2)
 	recNumRead = (dataBufferRead->cur_rec - 2 + MaxDataBuf) % MaxDataBuf;
 	currentReadBlock = dataTabRead[recNumRead].seqnum;
+	fprintf(stderr, "Exiting Correlator::initializeReadSHM()\n");
 }
 
 /*******************************************************************
@@ -82,42 +81,45 @@ void Correlator::initializeReadSHM()
  *******************************************************************/
 void Correlator::initializeReadSHM_SPOTLIGHT(char fileSHM)
 {
-	int iddataHdr, idDataBuffer;
+	fprintf(stderr, "Inside Correlator::initializeReadSHM_SPOTLIGHT(char fileSHM)\n");
+	int idDataHdr, idDataBuffer;
 	if (!fileSHM)
 	{
-		iddataHdr = shmget(DasHeaderKey, sizeof(DataHeader), 644);
+		idDataHdr = shmget(DasHeaderKey, sizeof(DataHeader), 644);
 		idDataBuffer = shmget(DasBufferKey, sizeof(DataBuffer), 644);
 	}
 	else
 	{
-		iddataHdr = shmget(DasHeaderKey_SIM, sizeof(DataHeader), 644);
+		idDataHdr = shmget(DasHeaderKey_SIM, sizeof(DataHeader), 644);
 		idDataBuffer = shmget(DasBufferKey_SIM, sizeof(DataBuffer), 644);
 	}
-	cout << "iddataHdr=" << iddataHdr << endl
-		 << "idDataBuffer=" << idDataBuffer << endl;
+	fprintf(stderr, "idDataHdr: %d\nidDataBuffer: %d\n", idDataHdr, idDataBuffer);
 
-	if (iddataHdr < 0 || iddataHdr < 0)
+	if (idDataHdr < 0 || idDataHdr < 0)
 	{
 		exit(1);
 	}
-	dataHdrReadFRB = (DataHeader *)shmat(iddataHdr, 0, SHM_RDONLY);
+	dataHdrReadFRB = (DataHeader *)shmat(idDataHdr, 0, SHM_RDONLY);
 	dataBufferReadFRB = (DataBuffer *)shmat(idDataBuffer, 0, SHM_RDONLY);
 	cout << "Attached to shared memory:" << dataHdrReadFRB << "," << dataBufferReadFRB << endl;
+	fprintf(stderr, "Max no. of blocks: %d\n", MaxDataBlocks);
 
-	cout << "Max no of blocks=" << MaxDataBlocks << endl;
 	if ((dataBufferReadFRB) == (DataBuffer *)-1)
 	{
-		cout << "Cannot attach to shared memory!" << endl;
+		fprintf(stderr, "Cannot attach to SHM!\n");
 		exit(1);
 	}
 	/* find a block, two blocks before the current block of the shm for reading data */
 	// if(dataBuffer->cur_rec > (dataBuffer->maxblocks)/2)
 	recNumRead = (dataBufferReadFRB->curRecord - 2 + MaxDataBlocks) % MaxDataBlocks;
 	currentReadBlock = dataBufferReadFRB->curBlock - 2;
+
+	fprintf(stderr, "Exiting Correlator::initializeReadSHM_SPOTLIGHT(char fileSHM)\n");
 }
 
 void Correlator::copyHeaderInfo()
 {
+	fprintf(stderr, "Inside Correlator::copyHeaderInfo()\n");
 	dataHdrWrite->active = dataHdrRead->active;
 	dataHdrWrite->status = dataHdrRead->status;
 	dataHdrWrite->scan = dataHdrRead->scan;
@@ -127,6 +129,7 @@ void Correlator::copyHeaderInfo()
 	dataHdrWrite->BeamHeader = dataHdrRead->BeamHeader;
 	dataBufferWrite->blocksize = dataBufferRead->blocksize;
 	dataBufferWrite->maxblocks = dataBufferRead->maxblocks;
+	fprintf(stderr, "Exiting Correlator::copyHeaderInfo()\n");
 }
 
 /*******************************************************************
@@ -135,30 +138,30 @@ void Correlator::copyHeaderInfo()
  *******************************************************************/
 int Correlator::initializeWriteSHM()
 {
-	int iddataHdr, idDataBuffer;
+	fprintf(stderr, "Inside Correlator::initializeWriteSHM()\n");
+	int idDataHdr, idDataBuffer;
 	if (dataHdrRead == NULL)
 	{
-		iddataHdr = shmget(DAS_H_KEY_AJAX, sizeof(DasHdrType), IPC_CREAT | 0666);
+		idDataHdr = shmget(DAS_H_KEY_AJAX, sizeof(DasHdrType), IPC_CREAT | 0666);
 		idDataBuffer = shmget(DAS_D_KEY_AJAX, sizeof(DataBufType), IPC_CREAT | 0666);
 	}
 	else
 	{
-		iddataHdr = shmget(DAS_H_KEY_AJAX_INLINE, sizeof(DasHdrType), IPC_CREAT | 0666);
+		idDataHdr = shmget(DAS_H_KEY_AJAX_INLINE, sizeof(DasHdrType), IPC_CREAT | 0666);
 		idDataBuffer = shmget(DAS_D_KEY_AJAX_INLINE, sizeof(DataBufType), IPC_CREAT | 0666);
 	}
-	cout << "iddataHdr=" << iddataHdr << endl
-		 << "idDataBuffer=" << idDataBuffer << endl;
+	fprintf(stderr, "idDataHdr: %d\nidDataBuffer: %d\n", idDataHdr, idDataBuffer);
 
-	if (iddataHdr < 0 || iddataHdr < 0)
+	if (idDataHdr < 0 || idDataHdr < 0)
 	{
-		cout << "Error creating shared memory" << endl;
+		fprintf(stderr, "Error creating SHM.\n");
 		exit(1);
 	}
-	dataHdrWrite = (DasHdrType *)shmat(iddataHdr, 0, 0);
+	dataHdrWrite = (DasHdrType *)shmat(idDataHdr, 0, 0);
 	dataBufferWrite = (DataBufType *)shmat(idDataBuffer, 0, 0);
 	if ((dataBufferWrite) == (DataBufType *)-1)
 	{
-		cout << "Cannot attach to shared memory!" << endl;
+		fprintf(stderr, "Cannot attach to SHM!\n");
 		exit(1);
 	}
 	cout << "Attached to write shared memory:" << dataHdrWrite << "," << dataBufferWrite << endl;
@@ -171,7 +174,7 @@ int Correlator::initializeWriteSHM()
 	else
 	{
 		copyHeaderInfo();
-		cout << "header info copied" << endl;
+		fprintf(stderr, "Header info copied.\n");
 	}
 	dataTabWrite = dataBufferWrite->dtab;
 	dataBufferWrite->cur_rec = 0;
@@ -181,10 +184,11 @@ int Correlator::initializeWriteSHM()
 	dataTabWrite[recNumWrite].rec = 0;
 	for (int i = 0; i < MaxDataBuf; i++)
 		dataTabWrite[i].flag = 0;
-	cout << "Max no of blocks=" << dataBufferWrite->maxblocks << endl;
-	cout << "blocksize: " << dataBufferWrite->blocksize << endl;
+	fprintf(stderr, "Max no. of blocks: %d\n", dataBufferWrite->maxblocks);
+	fprintf(stderr, "dataBufferWrite->blocksize: %d\n", dataBufferWrite->blocksize);
 	dataHdrWrite->status = DAS_START;
 	return dataBufferWrite->blocksize - DataOff;
+	fprintf(stderr, "Exiting Correlator::initializeWriteSHM()\n");
 }
 
 /*******************************************************************
@@ -193,31 +197,31 @@ int Correlator::initializeWriteSHM()
  *******************************************************************/
 int Correlator::initializeWriteSHM_SPOTLIGHT(char fileSHM)
 {
-	int iddataHdr, idDataBuffer;
+	fprintf(stderr, "Inside Correlator::initializeWriteSHM_SPOTLIGHT()\n");
+	int idDataHdr, idDataBuffer;
 	if (!fileSHM)
 	{
 		idDataBuffer = shmget(DasBufferKey, sizeof(DataBuffer), IPC_CREAT | 0666);
-		iddataHdr = shmget(DasHeaderKey, sizeof(DataHeader), IPC_CREAT | 0666);
+		idDataHdr = shmget(DasHeaderKey, sizeof(DataHeader), IPC_CREAT | 0666);
 	}
 	else
 	{
 		idDataBuffer = shmget(DasBufferKey_SIM, sizeof(DataBuffer), IPC_CREAT | 0666);
-		iddataHdr = shmget(DasHeaderKey_SIM, sizeof(DataHeader), IPC_CREAT | 0666);
+		idDataHdr = shmget(DasHeaderKey_SIM, sizeof(DataHeader), IPC_CREAT | 0666);
 	}
 
-	cout << "iddataHdr=" << iddataHdr << endl
-		 << "idDataBuffer=" << idDataBuffer << endl;
+	fprintf(stderr, "idDataHdr: %d\nidDataBuffer: %d\n", idDataHdr, idDataBuffer);
 
-	if (iddataHdr < 0 || iddataHdr < 0)
+	if (idDataHdr < 0 || idDataHdr < 0)
 	{
-		cout << "Error creating shared memory" << endl;
+		fprintf(stderr, "Error creating SHM!\n");
 		exit(1);
 	}
-	dataHdrWriteFRB = (DataHeader *)shmat(iddataHdr, 0, 0);
+	dataHdrWriteFRB = (DataHeader *)shmat(idDataHdr, 0, 0);
 	dataBufferWriteFRB = (DataBuffer *)shmat(idDataBuffer, 0, 0);
 	if (dataBufferWriteFRB == (DataBuffer *)-1)
 	{
-		cout << "Cannot attach to shared memory!" << endl;
+		fprintf(stderr, "Cannot atttach to SHM!\n");
 		exit(1);
 	}
 	cout << "Attached to write shared memory:" << dataHdrWriteFRB << "," << dataBufferWriteFRB << endl;
@@ -226,49 +230,49 @@ int Correlator::initializeWriteSHM_SPOTLIGHT(char fileSHM)
 	dataBufferWriteFRB->curBlock = 0;
 	recNumWrite = (dataBufferWriteFRB->curRecord) % MaxDataBlocks;
 
-	cout << "Max no of blocks=" << MaxDataBlocks << endl;
-	cout << "blocksize: " << DataSize << endl;
+	fprintf(stderr, "Max no. of blocks: %d\n", MaxDataBlocks);
+	fprintf(stderr, "DataSize: %d\n", DataSize);
 	dataHdrWriteFRB->active = 1;
 	return DataSize;
+	fprintf(stderr, "Exiting Correlator::initializeWriteSHM_SPOTLIGHT()\n");
 }
 
 void Correlator::writeToSHM_SPOTLIGHT(unsigned char *rawData)
 {
-
-	cout << "Memcpy to SHM" << endl;
-	cout << "Writing Record:" << dataBufferWriteFRB->curRecord << endl;
-	cout << "Writing Block:" << dataBufferWriteFRB->curBlock << endl;
-	cout << "DataSize:" << DataSize << endl;
+	fprintf(stderr, "Inside Correlator::writeToSHM_SPOTLIGHT(unsigned char *rawData)\n");
+	fprintf(stderr, "Starting memcpy to SHM.\n");
+	fprintf(stderr, "Writing Record: %u\n", dataBufferWriteFRB->curRecord);
+	fprintf(stderr, "Writing Block: %u\n", dataBufferWriteFRB->curBlock);
+	fprintf(stderr, "DataSize: %d\n", DataSize);
 	memcpy(dataBufferWriteFRB->data + (long)DataSize * (long)recNumWrite, rawData, DataSize);
-	cout << "Done memcpy to SHM" << endl;
+	fprintf(stderr, "Done memcpy to SHM.\n");
 
 	dataBufferWriteFRB->curRecord = (recNumWrite + 1) % MaxDataBlocks;
 	dataBufferWriteFRB->curBlock += 1;
-	// warnFile.close();
-	// dataTabWrite[(recNumWrite+1)%MaxDataBuf].flag=0;
-	// dataTabWrite[(recNumWrite)].flag=BufReady;
 	recNumWrite = (recNumWrite + 1) % MaxDataBlocks;
+	fprintf(stderr, "Exiting Correlator::writeToSHM_SPOTLIGHT(unsigned char *rawData)\n");
 }
 
 void Correlator::writeToSHM_SPOTLIGHT(unsigned char *rawData, struct timeval timestamp_gps)
 {
-	cout << "Memcpy to SHM" << endl;
-	cout << "Writing Record:" << dataBufferWriteFRB->curRecord << endl;
-	cout << "Writing Block:" << dataBufferWriteFRB->curBlock << endl;
-	cout << "DataSize:" << DataSize << endl;
+	fprintf(stderr, "Inside Correlator::writeToSHM_SPOTLIGHT(unsigned char *rawData, struct timeval timestamp_gps)\n");
+	fprintf(stderr, "Starting memcpy to SHM.\n");
+	fprintf(stderr, "Writing Record: %u\n", dataBufferWriteFRB->curRecord);
+	fprintf(stderr, "Writing Block: %u\n", dataBufferWriteFRB->curBlock);
+	fprintf(stderr, "DataSize: %d\n", DataSize);
 	memcpy(dataBufferWriteFRB->data + (long)DataSize * (long)recNumWrite, rawData, DataSize);
-	cout << "Done memcpy to SHM" << endl;
+	fprintf(stderr, "Done memcpy to SHM.\n");
+
 	dataHdrWriteFRB->timestamp_gps[recNumWrite] = timestamp_gps;
 	dataBufferWriteFRB->curRecord = (recNumWrite + 1) % MaxDataBlocks;
 	dataBufferWriteFRB->curBlock += 1;
-	// warnFile.close();
-	// dataTabWrite[(recNumWrite+1)%MaxDataBuf].flag=0;
-	// dataTabWrite[(recNumWrite)].flag=BufReady;
 	recNumWrite = (recNumWrite + 1) % MaxDataBlocks;
+	fprintf(stderr, "Exiting Correlator::writeToSHM_SPOTLIGHT(unsigned char *rawData, struct timeval timestamp_gps)\n");
 }
 
 void Correlator::writeToSHM(unsigned short int *rawData)
 {
+	fprintf(stderr, "Inside Correlator::writeToSHM(unsigned short int *rawData)\n");
 	long int fetched = 0;
 	ofstream warnFile;
 	dataTabWrite[recNumWrite].seqnum = dataBufferWrite->cur_block;
@@ -277,16 +281,16 @@ void Correlator::writeToSHM(unsigned short int *rawData)
 	if (debug)
 	{
 		cout << endl
-			 << "recNum " << recNumWrite << endl;
-		cout << "dataBuffer->cur_rec " << dataBufferWrite->cur_rec << endl;
-		cout << "MaxDataBuf " << MaxDataBuf << endl;
-		cout << "dataBuffer->cur_block " << dataBufferWrite->cur_block << endl;
-		cout << "dataBuffer->maxblocks " << dataBufferWrite->maxblocks << endl;
-		cout << "dataTabWrite[recNumWrite].rec " << dataTabWrite[recNumWrite].rec << endl;
-		cout << "dataTabWrite[recNumWrite].flag " << dataTabWrite[recNumWrite].flag << endl;
-		cout << "dataTabWrite[recNumWrite].seqnum" << dataTabWrite[recNumWrite].seqnum << endl;
-		cout << "dataHdrWrite->status " << dataHdrWrite->status << endl;
-		cout << dataBufferWrite->blocksize << endl;
+			 << "recNum: " << recNumWrite << endl;
+		cout << "dataBufferWrite->cur_rec: " << dataBufferWrite->cur_rec << endl;
+		cout << "MaxDataBuf: " << MaxDataBuf << endl;
+		cout << "dataBufferWrite->cur_block: " << dataBufferWrite->cur_block << endl;
+		cout << "dataBufferWrite->maxblocks: " << dataBufferWrite->maxblocks << endl;
+		cout << "dataTabWrite[recNumWrite].rec: " << dataTabWrite[recNumWrite].rec << endl;
+		cout << "dataTabWrite[recNumWrite].flag: " << dataTabWrite[recNumWrite].flag << endl;
+		cout << "dataTabWrite[recNumWrite].seqnum: " << dataTabWrite[recNumWrite].seqnum << endl;
+		cout << "dataHdrWrite->status: " << dataHdrWrite->status << endl;
+		cout << "dataBufferWrite->blocksize: " << dataBufferWrite->blocksize << endl;
 	}
 
 	memcpy(dataBufferWrite->buf + dataTabWrite[recNumWrite].rec * (dataBufferWrite->blocksize) + DataOff, rawData, dataBufferWrite->blocksize - DataOff);
@@ -297,37 +301,40 @@ void Correlator::writeToSHM(unsigned short int *rawData)
 	dataTabWrite[(recNumWrite + 1) % MaxDataBuf].flag = 0;
 	dataTabWrite[(recNumWrite)].flag = BufReady;
 	recNumWrite = (recNumWrite + 1) % MaxDataBuf;
+	fprintf(stderr, "Inside Correlator::writeToSHM(unsigned short int *rawData)\n");
 }
 
 void Correlator::writeToSHM(short int *rawData, char *header)
 {
+	fprintf(stderr, "Inside Correlator::writeToSHM(short int *rawData, char *header)\n");
 	dataTabWrite[recNumWrite].seqnum = dataBufferWrite->cur_block;
 	dataTabWrite[recNumWrite].rec = (dataBufferWrite->cur_block) % (dataBufferWrite->maxblocks);
 	if (debug)
 	{
 		cout << endl
-			 << "recNum " << recNumWrite << endl;
-		cout << "dataBuffer->cur_rec " << dataBufferWrite->cur_rec << endl;
+			 << "recNum: " << recNumWrite << endl;
+		cout << "dataBufferWrite->cur_rec: " << dataBufferWrite->cur_rec << endl;
 		cout << "MaxDataBuf " << MaxDataBuf << endl;
-		cout << "dataBuffer->cur_block " << dataBufferWrite->cur_block << endl;
-		cout << "dataBuffer->maxblocks " << dataBufferWrite->maxblocks << endl;
-		cout << "dataTabWrite[recNumWrite].rec " << dataTabWrite[recNumWrite].rec << endl;
-		cout << "dataTabWrite[recNumWrite].flag " << dataTabWrite[recNumWrite].flag << endl;
-		cout << "dataTabWrite[recNumWrite].seqnum" << dataTabWrite[recNumWrite].seqnum << endl;
-		cout << "dataHdrWrite->status " << dataHdrWrite->status << endl;
-		cout << dataBufferWrite->blocksize << endl;
+		cout << "dataBufferWrite->cur_block: " << dataBufferWrite->cur_block << endl;
+		cout << "dataBufferWrite->maxblocks: " << dataBufferWrite->maxblocks << endl;
+		cout << "dataTabWrite[recNumWrite].rec: " << dataTabWrite[recNumWrite].rec << endl;
+		cout << "dataTabWrite[recNumWrite].flag: " << dataTabWrite[recNumWrite].flag << endl;
+		cout << "dataTabWrite[recNumWrite].seqnum: " << dataTabWrite[recNumWrite].seqnum << endl;
+		cout << "dataHdrWrite->status: " << dataHdrWrite->status << endl;
+		cout << "dataBufferWrite->blocksize: " << dataBufferWrite->blocksize << endl;
 	}
-	cout << "start memcopy rawdata" << endl;
+	fprintf(stderr, "Starting memcpy Buffer.\n");
 	memcpy(dataBufferWrite->buf + dataTabWrite[recNumWrite].rec * (dataBufferWrite->blocksize) + DataOff, rawData, dataBufferWrite->blocksize - DataOff);
-	cout << "memcpy done" << endl;
-	// cout<<"start memcopy header"<<endl;
+	fprintf(stderr, "Done memcpy Buffer.\n");
+	fprintf(stderr, "Starting memcpy Header.\n");
 	// memcpy(dataBufferWrite->buf+dataTabWrite[recNumWrite].rec*(dataBufferWrite->blocksize),header,DataOff);
-	// cout<<"memcpy done"<<endl;
+	fprintf(stderr, "Done memcpy Header.\n");
 	dataBufferWrite->cur_rec = (recNumWrite + 1) % MaxDataBuf;
 	dataBufferWrite->cur_block += 1;
 	dataTabWrite[(recNumWrite + 1) % MaxDataBuf].flag = 0;
 	dataTabWrite[(recNumWrite)].flag = BufReady;
 	recNumWrite = (recNumWrite + 1) % MaxDataBuf;
+	fprintf(stderr, "Exiting Correlator::writeToSHM(short int *rawData, char *header)\n");
 }
 
 /*******************************************************************
@@ -336,7 +343,7 @@ void Correlator::writeToSHM(short int *rawData, char *header)
  *******************************************************************/
 void Correlator::readFromSHM(unsigned short int *rawData)
 {
-
+	fprintf(stderr, "Inside Correlator::readFromSHM(unsigned short int *rawData)\n");
 	ofstream warnFile;
 	warnFile.open("realTimeWarning.gpt", ios::app);
 	int flag = 0;
@@ -345,18 +352,18 @@ void Correlator::readFromSHM(unsigned short int *rawData)
 		usleep(2000);
 		if (flag == 0)
 		{
-			cout << "Waiting for DAS_START" << endl;
+			fprintf(stderr, "Waiting for DAS_START\n");
 			flag = 1;
 		}
 	}
 	if (flag == 1)
-		cout << "Ready" << endl;
+		fprintf(stderr, "Ready!\n");
 
 	if (dataHdrRead->status != DAS_START)
 	{
 		if ((dataTabRead[recNumRead].flag & BufReady) == 0)
 		{
-			cout << "DAS not in START mode!!" << endl;
+			fprintf(stderr, "DAS not in START mode!!\n");
 			exit(0);
 		}
 	}
@@ -364,12 +371,12 @@ void Correlator::readFromSHM(unsigned short int *rawData)
 	if (debug)
 	{
 		cout << endl
-			 << "recNum " << recNumRead << endl;
-		cout << "dataBuffer->cur_rec " << dataBufferRead->cur_rec << endl;
-		cout << "MaxDataBuf " << MaxDataBuf << endl;
-		cout << "dataBuffer->cur_block " << dataBufferRead->cur_block << endl;
-		cout << "currentReadBlock " << currentReadBlock << endl;
-		cout << "dataBuffer->maxblocks " << dataBufferRead->maxblocks << endl
+			 << "recNumRead: " << recNumRead << endl;
+		cout << "dataBufferRead->cur_rec: " << dataBufferRead->cur_rec << endl;
+		cout << "MaxDataBuf: " << MaxDataBuf << endl;
+		cout << "dataBufferRead->cur_block: " << dataBufferRead->cur_block << endl;
+		cout << "currentReadBlock: " << currentReadBlock << endl;
+		cout << "dataBufferRead->maxblocks: " << dataBufferRead->maxblocks << endl
 			 << endl;
 	}
 
@@ -378,7 +385,7 @@ void Correlator::readFromSHM(unsigned short int *rawData)
 		warnFile << "recNum = " << recNumRead << ", Reading Sequence: " << currentReadBlock << ", Collect's Sequence: " << (dataBufferRead->cur_block - 1) << endl;
 		warnFile << "Processing lagged behind..." << endl;
 
-		cout << "recNum = " << recNumRead << ", Reading Sequence: " << currentReadBlock << ", Collect's Sequence: " << (dataBufferRead->cur_block - 1) << "\nRealiging...\n";
+		fprintf(stderr, "recNumRead: %d; Reading Sequence, i.e., currentReadBlock: %ld; Collect's Sequence: %d\nRealigning...\n", recNumRead, currentReadBlock, dataBufferRead->cur_block - 1);
 		recNumRead = (dataBufferRead->cur_rec - 1 - 2 + MaxDataBuf) % MaxDataBuf;
 		currentReadBlock = dataTabRead[(recNumRead)].seqnum;
 	}
@@ -387,6 +394,7 @@ void Correlator::readFromSHM(unsigned short int *rawData)
 	recNumRead = (recNumRead + 1) % MaxDataBuf;
 
 	warnFile.close();
+	fprintf(stderr, "Exiting Correlator::readFromSHM(unsigned short int *rawData)\n");
 }
 
 /*******************************************************************
@@ -395,7 +403,7 @@ void Correlator::readFromSHM(unsigned short int *rawData)
  *******************************************************************/
 void Correlator::readFromSHM_SPOTLIGHT(unsigned char *rawData)
 {
-
+	fprintf(stderr, "Inside Correlator::readFromSHM_SPOTLIGHT(unsigned char *rawData)\n");
 	ofstream warnFile;
 	warnFile.open("realTimeWarning.gpt", ios::app);
 	int flag = 0;
@@ -404,29 +412,28 @@ void Correlator::readFromSHM_SPOTLIGHT(unsigned char *rawData)
 		usleep(2000);
 		if (flag == 0)
 		{
-			cout << "Waiting RD FROM FRB SHM" << endl;
+			fprintf(stderr, "Waiting RD from FRB_SHM.\n");
 			flag = 1;
 		}
 	}
 	if (flag == 1)
-		cout << "Ready" << endl;
+		fprintf(stderr, "Ready\n");
 
 	currentReadBlock++;
 	if (debug)
 	{
-		cout << "dataBuffer->curRecord " << dataBufferReadFRB->curRecord << endl;
-		cout << "MaxDataBlocks " << MaxDataBlocks << endl;
-		cout << "dataBuffer->curBlock " << dataBufferReadFRB->curBlock << endl;
-		cout << "currentReadBlock " << currentReadBlock << endl;
-		cout << "recNumRead" << recNumRead << endl;
+		cout << "dataBufferReadFRB->curRecord: " << dataBufferReadFRB->curRecord << endl;
+		cout << "MaxDataBlocks: " << MaxDataBlocks << endl;
+		cout << "dataBufferReadFRB->curBlock: " << dataBufferReadFRB->curBlock << endl;
+		cout << "currentReadBlock: " << currentReadBlock << endl;
+		cout << "recNumRead: " << recNumRead << endl;
 	}
 
 	if (dataBufferReadFRB->curBlock - currentReadBlock >= MaxDataBlocks - 1)
 	{
 
 		warnFile << "Processing lagged behind..." << endl;
-
-		cout << "\nRealiging...\n";
+		fprintf(stderr, "\nRealigning...\n");
 		recNumRead = (dataBufferReadFRB->curRecord - 2 + MaxDataBlocks) % MaxDataBlocks;
 		currentReadBlock = dataBufferReadFRB->curBlock;
 	}
@@ -434,61 +441,5 @@ void Correlator::readFromSHM_SPOTLIGHT(unsigned char *rawData)
 	recNumRead = (recNumRead + 1) % MaxDataBlocks;
 
 	warnFile.close();
+	fprintf(stderr, "Exiting Correlator::readFromSHM_SPOTLIGHT(unsigned char *rawData)\n");
 }
-
-/*******************************************************************
- *FUNCTION: AcquireData::readFromSHM()
- *Reads from collect_psr shared memory of GSB/GWB
- *******************************************************************/
-/*void Correlator::readFromSHM(char* rawData)
-{
-
-	ofstream warnFile;
-	warnFile.open("realTimeWarning.gpt",ios::app);
-	int flag=0;
-	while((dataHdrRead->status == DAS_START) && (dataTabRead[recNumRead].flag &BufReady) == 0)
-	{
-		usleep(2000);
-		if(flag==0)
-		{
-			cout<<"Waiting"<<endl;
-			flag=1;
-		}
-	}
-	if(flag==1)
-		cout<<"Ready"<<endl;
-
-	if(dataHdrRead->status != DAS_START)
-	{
-		if ((dataTabRead[recNumRead].flag & BufReady) == 0)
-		{
-			cout<<"DAS not in START mode!!"<<endl;
-			exit(0);
-		}
-	}
-	currentReadBlock = dataTabRead[recNumRead].seqnum;
-	if(debug)
-	{
-		cout<<endl<<"recNum "<<recNumRead<<endl;
-		cout<<"dataBuffer->cur_rec "<<dataBufferRead->cur_rec<<endl;
-		cout<<"MaxDataBuf "<<MaxDataBuf<<endl;
-		cout<<"dataBuffer->cur_block "<<dataBufferRead->cur_block<<endl;
-		cout<<"currentReadBlock "<<currentReadBlock<<endl;
-		cout<<"dataBuffer->maxblocks "<<dataBufferRead->maxblocks<<endl<<endl;
-	}
-
-	if(dataBufferRead->cur_block - currentReadBlock >=dataBufferRead->maxblocks-1)
-	{
-		warnFile<<"recNum = "<<recNumRead<<", Reading Sequence: "<<currentReadBlock<<", Collect's Sequence: "<<(dataBufferRead->cur_block-1)<<endl;
-		warnFile<<"Processing lagged behind..."<<endl;
-
-		cout<<"recNum = "<<recNumRead<<", Reading Sequence: "<<currentReadBlock<<", Collect's Sequence: "<<(dataBufferRead->cur_block-1)<<"\nRealiging...\n";
-		recNumRead = (dataBufferRead->cur_rec-1-2+MaxDataBuf)%MaxDataBuf;
-		currentReadBlock = dataTabRead[(recNumRead)].seqnum;
-	}
-
-	memcpy(rawData, dataBufferRead->buf+dataTabRead[recNumRead].rec*(dataBufferRead->blocksize)+DataOff, dataBufferRead->blocksize-DataOff);
-	recNumRead=(recNumRead+1)%MaxDataBuf;
-
-	warnFile.close();
-}*/

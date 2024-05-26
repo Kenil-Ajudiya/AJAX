@@ -83,6 +83,7 @@ public:
 
 ThreadPacket::ThreadPacket(int noOfPol_)
 {
+	fprintf(stderr, "Inside ThreadPacket::ThreadPacket(int noOfPol_) Constructor.\n");
 	noOfPol = noOfPol_;
 	acquireData = NULL;
 	basicAnalysis = new BasicAnalysis *[noOfPol];
@@ -116,6 +117,7 @@ ThreadPacket::~ThreadPacket()
 
 void ThreadPacket::copy(ThreadPacket *threadPacket)
 {
+	fprintf(stderr, "Inside ThreadPacket::copy(ThreadPacket *threadPacket).\n");
 	acquireData = threadPacket->acquireData;
 	for (int k = 0; k < noOfPol; k++)
 	{
@@ -128,6 +130,7 @@ void ThreadPacket::copy(ThreadPacket *threadPacket)
 
 void ThreadPacket::copySelect(ThreadPacket *threadPacket)
 {
+	fprintf(stderr, "Inside ThreadPacket::copySelect(ThreadPacket *threadPacket).\n");
 	for (int k = 0; k < noOfPol; k++)
 	{
 		basicAnalysisWrite[k] = threadPacket->basicAnalysis[k];
@@ -140,10 +143,9 @@ void ThreadPacket::copySelect(ThreadPacket *threadPacket)
 
 void ThreadPacket::freeMem()
 {
-
+	fprintf(stderr, "Inside ThreadPacket::freeMem(.\n");
 	for (int i = 0; i < noOfPol; i++)
 	{
-
 		if (basicAnalysisWrite[i] != NULL)
 			delete basicAnalysisWrite[i];
 		if (advancedAnalysisOld[i] != NULL)
@@ -180,7 +182,7 @@ public:
 
 	Runtime(Information info_, int nParallel_);
 	~Runtime();
-	void intializeFiles();
+	void initializeFiles();
 	void fillPipe();
 	void loopThrough();
 	void closePipe();
@@ -205,7 +207,7 @@ private:
 
 Runtime::Runtime(Information info_, int nParallel_)
 {
-	cout << "Inside RunTime(Information info_, int nParallel_) Constructor." << endl;
+	fprintf(stderr, "Inside RunTime(Information info_, nParallel_: %d) Constructor.\n", nParallel_);
 	nActions = 4;
 	nParallel = nParallel_;
 	nParallelTemp = nParallel;
@@ -228,9 +230,7 @@ Runtime::Runtime(Information info_, int nParallel_)
 	{
 		if (info.noOfChannels % info.freqIntFactor > 0)
 		{
-			cout << endl
-				 << endl
-				 << "Number of channels should be an integer multiple of factor by which to integrate." << endl;
+			fprintf(stderr, "\nNumber of channels should be an integer multiple of factor by which to integrate.\n");
 			exit(0);
 		}
 		info.noOfChannels /= info.freqIntFactor;
@@ -242,10 +242,11 @@ Runtime::Runtime(Information info_, int nParallel_)
 	}
 	if (info.timeIntFactor > 1)
 	{
-		cout << info.blockSizeSamples << endl;
+		fprintf(stderr, "info.blockSizeSamples: %ld\n", info.blockSizeSamples);
+
 		if (info.blockSizeSamples % info.timeIntFactor > 0)
 		{
-			cout << info.blockSizeSamples << "," << info.blockSizeSec << endl;
+			fprintf(stderr, "info.blockSizeSizeSec: %f\n", info.blockSizeSec);
 			info.blockSizeSamples += info.blockSizeSamples % info.timeIntFactor;
 			info.blockSizeSec = info.blockSizeSamples * info.samplingInterval;
 			// cout<<endl<<endl<<"Number of samples in each block should be an integer multiple of factor by which to integrate."<<endl;
@@ -258,7 +259,7 @@ Runtime::Runtime(Information info_, int nParallel_)
 	if (!info.doReadFromFile)
 	{
 		shmInterface = new Correlator(acquireData->dataHdr, acquireData->dataBuffer);
-		cout << "Initilizing write SHM [FRB]" << endl;
+		fprintf(stderr, "Initilizing write SHM [FRB].\n");
 		shmInterface->initializeWriteSHM_SPOTLIGHT(0);
 		nbuff = acquireData->nbuff;
 	}
@@ -266,17 +267,16 @@ Runtime::Runtime(Information info_, int nParallel_)
 	AcquireData::info = info;
 	AcquireData::curPos = long((info.startTime / info.samplingInterval)) * info.noOfChannels * info.noOfPol * info.sampleSizeBytes;
 	AcquireData::info.startTime = long(info.startTime / info.blockSizeSec) * info.blockSizeSec;
-	cout << "Inside RunTime() constructor, info.filepath is: " << info.filepath << endl;
+	fprintf(stderr, "Inside RunTime() constructor, info.filepath is: %s\n", info.filepath);
 	info.display();
 
-	cout << "Attempting to define threadPacket = new ThreadPacket *[nActions * nParallel];." << endl;
 	threadPacket = new ThreadPacket *[nActions * nParallel];
-	cout << "threadPacket = new ThreadPacket *[nActions * nParallel]; defined successfully." << endl;
+	fprintf(stderr, "threadPacket = new ThreadPacket *[nActions * nParallel]; defined successfully.\n");
 
 	for (int i = 0; i < nActions * nParallel; i++)
 		threadPacket[i] = new ThreadPacket(info.noOfPol);
 
-	cout << "All threadPacket[i] initialised successfully." << endl;
+	fprintf(stderr, "All threadPacket[i] initialised successfully.\n");
 
 	centralpass0 = new float[info.noOfPol];
 	centralpass1 = new float[info.noOfPol];
@@ -291,9 +291,7 @@ Runtime::Runtime(Information info_, int nParallel_)
 		double totalTime = (AcquireData::eof * info.samplingInterval) / (info.noOfChannels * info.sampleSizeBytes * info.noOfPol * info.freqIntFactor * info.timeIntFactor);
 		if (info.startTime > totalTime)
 		{
-			cout << endl
-				 << endl
-				 << "File contains " << totalTime << " seconds of data. Please give a starting time less than that" << endl;
+			fprintf(stderr, "\nFile contains %lf seconds of data. Please give a starting time less than that.\n", totalTime);
 			exit(0);
 		}
 		double extraOffset = info.startTime * 1000.0 / info.periodInMs;
@@ -307,23 +305,23 @@ Runtime::Runtime(Information info_, int nParallel_)
 	else
 		totalBlocks = totalBlocksNoOff = 0;
 
-	cout << "After if (info.doReadFromFile){} else {}." << endl;
+	fprintf(stderr, "After if (info.doReadFromFile){} else {}.\n");
 
 	if (info.smoothFlagWindowLength > 0)
 		info.smoothFlagWindowLength = (int)(info.smoothFlagWindowLength / info.samplingInterval);
 	info.concentrationThreshold = 1.0 - info.concentrationThreshold / 100.0;
 
-	cout << "Before for (int k = 0; k < info.noOfPol; k++)." << endl;
+	fprintf(stderr, "Before for (int k = 0; k < info.noOfPol; k++).\n");
 
 	for (int k = 0; k < info.noOfPol; k++)
 	{
 		if (!info.doFilteringOnly)
 			threadPacket[(nActions - 1) * nParallel]->advancedAnalysisOld[k] = new AdvancedAnalysis(info);
 		threadPacket[nActions - 1]->basicAnalysis[k] = new BasicAnalysis(info);
-		cout << "In for (int k = 0; k < info.noOfPol; k++), k = " << k << endl;
+		fprintf(stderr, "In for (int k = 0; k < info.noOfPol; k++).\n");
 	}
 
-	cout << "After for (int k = 0; k < info.noOfPol; k++)." << endl;
+	fprintf(stderr, "After for (int k = 0; k < info.noOfPol; k++).\n");
 
 	blankTimeFlags = new char[info.blockSizeSamples + 1];
 	blankChanFlags = new char[info.stopChannel - info.startChannel];
@@ -338,8 +336,8 @@ Runtime::Runtime(Information info_, int nParallel_)
 	chanFirst = 0;
 	if ((info.doTimeFlag && info.doChanFlag && (info.flagOrder == 1)) || info.doUseNormalizedData || info.doChanFlag)
 		chanFirst = 1;
-	cout << "Reached end of Runtime()" << endl; // DEBUG
-												// omp_set_num_threads(2+3*nParallel);
+	fprintf(stderr, "Reached end of Runtime()\n");
+	// omp_set_num_threads(2+3*nParallel);
 
 	// omp_set_dynamic(0);
 }
@@ -355,13 +353,14 @@ Runtime::~Runtime()
 void Runtime::displayBlockIndex(int blockIndex)
 {
 	if (info.doReadFromFile)
-		cout << '\r' << "Block:" << (blockIndex)-nActions * nParallel + 1 << " of " << totalBlocks << std::flush;
+		fprintf(stderr, "Block: %d of %d\n", blockIndex - nActions * nParallel + 1, totalBlocks);
 	else
-		cout << '\r' << "Block:" << (blockIndex)-nActions * nParallel + 1 << std::flush;
+		fprintf(stderr, "Block: %d\n", blockIndex - nActions * nParallel + 1);
 }
 
 void Runtime::testStatistics(ThreadPacket *threadPacket)
 {
+	fprintf(stderr, "Inside Runtime::testStatistics(ThreadPacket *threadPacket).\n");
 	for (int k = 0; k < info.noOfPol; k++)
 	{
 		double rmsPreFlag, meanPreFlag, rmsPostFlag, meanPostFlag, sum3, skewnessPostFilt;
@@ -413,6 +412,7 @@ void Runtime::testStatistics(ThreadPacket *threadPacket)
 
 void Runtime::writeFlagStats(ThreadPacket *threadPacket)
 {
+	fprintf(stderr, "Inside Runtime::writeFlagStats(ThreadPacket *threadPacket).\n");
 	for (int k = 0; k < info.noOfPol; k++)
 	{
 		ofstream statFile;
@@ -448,8 +448,9 @@ void Runtime::writeFlagStats(ThreadPacket *threadPacket)
 	}
 }
 
-void Runtime::intializeFiles()
+void Runtime::initializeFiles()
 {
+	fprintf(stderr, "Inside Runtime::initializeFiles().\n");
 	if (info.doWriteChanFlags && info.doChanFlag)
 	{
 		ofstream chanflagfile;
@@ -481,8 +482,9 @@ void Runtime::intializeFiles()
 
 void Runtime::writeAll(ThreadPacket *threadPacket)
 {
+	fprintf(stderr, "Inside Runtime::writeAll(ThreadPacket *threadPacket).\n");
 	unsigned char *filteredRawData = threadPacket->basicAnalysisWrite[0]->filteredRawDataChar;
-	cout << "Start writing output Buffer; nbuff = " << nbuff << endl;
+	fprintf(stderr, "Start writing output Buffer; nbuff = %d\n", nbuff);
 	for (int i = 0; i < nbuff; i++)
 	{
 		shmInterface->writeToSHM_SPOTLIGHT(filteredRawData, threadPacket->basicAnalysisWrite[0]->timestamp);
@@ -505,7 +507,7 @@ void Runtime::writeAll(ThreadPacket *threadPacket)
 
 void Runtime::fillPipe()
 {
-
+	fprintf(stderr, "Inside Runtime::fillPipe().\n");
 	fillTime = omp_get_wtime(); // benchmark
 	int index;
 	readCompleteFlag = 0;
@@ -513,11 +515,11 @@ void Runtime::fillPipe()
 
 	for (int k = 0; k < nActions; k++)
 	{
-// cout<<blockIndex<<","<<k<<endl;
+		fprintf(stderr, "blockIndex: %d, and k: %d\n", blockIndex, k);
 #pragma omp parallel for schedule(dynamic, 1)
 		for (int j = 1; j < k + 1; j++)
 		{
-			//	cout<<j*nParallel<<","<<j<<endl;
+			fprintf(stderr, "j*nParallel: %d, and j: \n", j * nParallel, j);
 			action(j * nParallel, j);
 		}
 
@@ -547,6 +549,7 @@ void Runtime::fillPipe()
 
 void Runtime::loopThrough()
 {
+	fprintf(stderr, "Inside Runtime::loopThrough()\n");
 	double startTime, timeP, time0, time1, time2, time3, time4, time5, timeNet; // benchmark variables
 	omp_set_nested(1);
 	ofstream benchmarkfile;
@@ -606,8 +609,7 @@ void Runtime::loopThrough()
 		readDoneFlag = 1;
 		if (!keepRunning)
 		{
-			cout << endl
-				 << "Terminating program.." << endl;
+			fprintf(stderr, "\nTerminating program.\n");
 			break;
 		}
 
@@ -624,8 +626,7 @@ void Runtime::loopThrough()
 
 void Runtime::quickclosePipe()
 {
-	cout << endl
-		 << "Closing pipe.." << endl;
+	fprintf(stderr, "\nClosing AJAX from Runtime::quickclosePipe()\n");
 	for (int k = 0; k < nParallelTemp; k++)
 	{
 		displayBlockIndex(blockIndex + k);
@@ -679,6 +680,7 @@ void Runtime::quickclosePipe()
 
 void Runtime::closePipe()
 {
+	fprintf(stderr, "\nClosing AJAX from Runtime::closePipe()\n");
 	for (int k = 0; k < nParallel; k++)
 	{
 		displayBlockIndex(blockIndex + k);
@@ -749,6 +751,7 @@ void Runtime::closePipe()
 
 void Runtime::action(int threadPacketIndex, int actionIndex)
 {
+	fprintf(stderr, "Inside Runtime::action(threadPacketIndex: %d, actionIndex: %d)\n", threadPacketIndex, actionIndex);
 	switch (actionIndex)
 	{
 	case 0:
@@ -780,7 +783,7 @@ void Runtime::action(int threadPacketIndex, int actionIndex)
  *******************************************************************/
 void Runtime::ioTasks(int threadPacketIndex)
 {
-
+	fprintf(stderr, "Inside Runtime::ioTasks(threadPacketIndex: %d)\n", threadPacketIndex);
 	double readTime, floatTime, restTime;
 	char killFlag = 0;
 	while (!killFlag)
@@ -828,6 +831,7 @@ void Runtime::ioTasks(int threadPacketIndex)
 
 void Runtime::floatConversionTasks(int threadPacketIndex)
 {
+	fprintf(stderr, "Inside Runtime::floatConversionTasks(threadPacketIndex: %d)\n", threadPacketIndex);
 	double readTime, floatTime, restTime;
 	// cout<<"i/o thread id:"<<sched_getcpu()<<endl;
 	ofstream benchmarkfile;
@@ -874,6 +878,7 @@ void Runtime::floatConversionTasks(int threadPacketIndex)
  *******************************************************************/
 void Runtime::channelTasks(int threadPacketIndex, char dosecondpass)
 {
+	fprintf(stderr, "Inside Runtime::channelTasks(threadPacketIndex: %d)\n", threadPacketIndex);
 #pragma omp parallel for ordered schedule(dynamic, 1)
 	for (int iParallel = 0; iParallel < nParallel; iParallel++)
 	{
@@ -1016,6 +1021,7 @@ void Runtime::channelTasks(int threadPacketIndex, char dosecondpass)
  *******************************************************************/
 void Runtime::timeTasks(int threadPacketIndex, char secondpass)
 {
+	fprintf(stderr, "Inside Runtime::timeTasks(threadPacketIndex: %d)\n", threadPacketIndex);
 	float *histogramIntervalTemp = new float[info.noOfPol];
 #pragma omp parallel for schedule(dynamic, 1)
 	for (int iParallel = 0; iParallel < nParallel; iParallel++)
@@ -1345,10 +1351,10 @@ int main(int argc, char *argv[])
 		startFlags[i] = 1;
 	for (int i = 0; i < info.noOfChannels - info.stopChannel; i++)
 		endFlags[i] = 1;
-	cout << "Attempting to define Runtime *runtime = new RunTime(info, nParallel)." << endl;
+	fprintf(stderr, "Attempting to define Runtime *runtime = new RunTime(info, nParallel).");
 	Runtime *runtime = new Runtime(info, nParallel);
-	cout << "Runtime *runtime = new RunTime(info, nParallel) defined successfully." << endl;
-	// runtime->intializeFiles();
+	fprintf(stderr, "Runtime *runtime = new RunTime(info, nParallel) defined successfully.");
+	// runtime->initializeFiles();
 
 	// code to capture cltr+c termination
 	struct sigaction act;

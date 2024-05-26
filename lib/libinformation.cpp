@@ -9,6 +9,7 @@ using namespace std;
  *******************************************************************/
 double Information::stringToDouble(const std::string &s)
 {
+	fprintf(stderr, "Inside Information::stringToDouble(const std::string &s)\n");
 	istringstream i(s);
 	double x;
 	if (!(i >> x))
@@ -17,79 +18,19 @@ double Information::stringToDouble(const std::string &s)
 }
 
 /*******************************************************************
- *FUNCTION: void Information::reformatAjaxInputFile()
- *Checks if the ajax.in file is latest version or not.
- *returns 1 if latest version otherwise returns 0.
- *******************************************************************/
-// void Information::reformatAjaxInputFile()
-// {
-// 	system("cp ajax.in ajax.in.oldver");
-// 	char *fileparstr = "ajax.in";
-// 	string line;
-// 	string lineTimeFlags, lineChanFlags, linefullDM;
-// 	int k = 1, CompleteFlag = 0;
-// 	ifstream filepar(fileparstr, ios::in);
-// 	stringstream fileOutput;
-// 	fileOutput << "#*#*#ajax input file v2.0#*#*#" << endl;
-// 	fileOutput << "-------------------------------------------------" << endl;
-// 	while (getline(filepar, line))
-// 	{
-// 		if ((k > 2 && k < 56))
-// 			fileOutput << line << endl;
-// 		k++;
-// 	}
-// 	filepar.close();
-// 	fileOutput << "-------------------------------------------------" << endl;
-// 	fileOutput << "#****manual flagging options****#" << endl;
-// 	fileOutput << "0		: Number of bad channel blocks" << endl;
-// 	fileOutput << "List: 		#in next line, example: [200,400],[1200,1400]" << endl;
-// 	fileOutput << "" << endl;
-// 	ofstream newInFile(fileparstr, ios::out);
-// 	newInFile << fileOutput.str().c_str();
-// 	newInFile.close();
-// }
-
-/*******************************************************************
- *FUNCTION: short int Information::checkAjaxInputFileVersion()
- *Checks if the ajax.in file is latest version or not.
- *returns 1 if latest version otherwise returns 0.
- *******************************************************************/
-// short int Information::checkAjaxInputFileVersion()
-// {
-// 	char *fileparstr = "ajax.in";
-// 	string firstline;
-// 	string newfirstline = "#************AJAX input file************#";
-// 	int k = 1, CompleteFlag = 0;
-// 	ifstream filepar(fileparstr, ios::in);
-// 	if (!filepar.is_open())
-// 	{
-// 		cout << "ajax.in not found!" << endl;
-// 		cout << "A sample ajax.in file has been written to the current directory." << endl;
-// 		writeWpmonIn();
-// 		exit(0);
-// 	}
-// 	getline(filepar, firstline);
-// 	if (firstline.compare(newfirstline) == 0)
-// 		return 1;
-// 	else
-// 		return 0;
-// }
-
-/*******************************************************************
  *FUNCTION: void Information::readAjaxInputFile()
  *Reads data from ajax.in file.
  *******************************************************************/
 void Information::readAjaxInputFile()
 {
-	cout << "Inside readAjaxInputFile()." << endl;
+	fprintf(stderr, "Inside Information::readAjaxInputFile()\n");
 	char *fileparstr = "ajax.in";
 	string line;
 	int k = 1, CompleteFlag = 0;
 	ifstream filepar(fileparstr, ios::in);
 	if (!filepar.is_open())
 	{
-		cout << "ajax.in not found!" << endl;
-		cout << "A sample ajax.in file has been written to the current directory." << endl;
+		fprintf(stderr, "ajax.in not found!\nA sample ajax.in file has been written to the current directory.");
 		writeWpmonIn();
 		exit(0);
 	}
@@ -369,19 +310,20 @@ void Information::readAjaxInputFile()
 	doMultiPointFilter = 0;
 	if (flagOrder == 2 && doUseNormalizedData) // Channel filtering cannot be done after time filtering if data is normalized
 	{
-		cout << "Error in line of ajax.in" << endl;
-		cout << "Channel filtering cannot be done after time filtering if data is normalized." << endl;
-		cout << "Recommended option is to do channel filtering first." << endl;
+		fprintf(stderr, "Error in line of ajax.in.\n\
+		Channel filtering cannot be done after time filtering if data is normalized.\n\
+		Recommended option is to do channel filtering first.\n");
 		exit(0);
 	}
 
 	//	calculateCutoff();
 	errorChecks();
-	cout << "Exiting readAjaxInputFile()." << endl;
+	fprintf(stderr, "Exiting Information::readAjaxInputFile()\n");
 }
 
 void Information::parseManFlagList(std::string &s)
 {
+	fprintf(stderr, "Inside Information::parseManFlagList(std::string &s)\n");
 	int p = 0;
 	int i = 0;
 	int p1, p2, p3;
@@ -391,16 +333,17 @@ void Information::parseManFlagList(std::string &s)
 	{
 		if (i >= nBadChanBlocks)
 		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
+			fprintf(stderr, "Error in line 60 of ajax.in\n\
+			Expected exactly %d list of bad sub-bands.\n",
+					nBadChanBlocks);
 			exit(0);
 		}
 		if (s[p] == '[')
 			p1 = p;
 		else
 		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected [ to mark the start of a bad sub-band" << endl;
+			fprintf(stderr, "Error in line 60 of ajax.in\n\
+			Expected [ to mark the start of a bad sub-band.\n");
 			exit(0);
 		}
 		while (s[++p] != ',' && s[p] != '[' && s[p] != ']' && p < slen)
@@ -409,8 +352,8 @@ void Information::parseManFlagList(std::string &s)
 			p2 = p;
 		else
 		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected ," << endl;
+			fprintf(stderr, "Error in line 60 of ajax.in\n\
+			Expected a comma (,).\n");
 			exit(0);
 		}
 		while (s[++p] != ']' && p < slen)
@@ -419,14 +362,14 @@ void Information::parseManFlagList(std::string &s)
 			p3 = p;
 		else
 		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected ] to mark the start of a bad sub-band" << endl;
+			fprintf(stderr, "Error in line 60 of ajax.in\n\
+			Expected ] to mark the end of a bad sub-band.\n");
 			exit(0);
 		}
 		if (++p < slen && s[p] != ',')
 		{
-			cout << "Error in line 60 of ajax.in" << endl;
-			cout << "Expected , between list of sub-bands" << endl;
+			fprintf(stderr, "Error in line 60 of ajax.in\n\
+			Expected a comma (,) between list of sub-bands.\n");
 			exit(0);
 		}
 		p++;
@@ -436,14 +379,17 @@ void Information::parseManFlagList(std::string &s)
 	}
 	if (i < nBadChanBlocks)
 	{
-		cout << "Error in line 60 of ajax.in" << endl;
-		cout << "Expected exactly " << nBadChanBlocks << " list of bad sub-bands" << endl;
+		fprintf(stderr, "Error in line 60 of ajax.in\n\
+			Expected exactly %d list of bad sub-bands.\n",
+				nBadChanBlocks);
+
 		exit(0);
 	}
 }
 
 void Information::fillParams()
 {
+	fprintf(stderr, "Inside Information::fillParams()\n");
 	if (doRunFilteredMode) // rerun of .gpt output file. No filtering/
 	{
 		doChanFlag = 0;
@@ -469,16 +415,16 @@ void Information::fillParams()
 
 void Information::errorChecks()
 {
-	cout << "Inside errorChecks()." << endl;
+	fprintf(stderr, "Inside Information::errorChecks()\n");
 	char erFlag = 0;
 	if (doReadFromFile == 1)
 	{
 		ifstream testExistance;
 		testExistance.open(filepath + to_string(0));
-		cout << "Inside errorChecks(), filepath is: " << filepath << endl;
+		fprintf(stderr, "Inside errorChecks(), filepath is: %s\n", filepath);
 		if (!testExistance.is_open())
 		{
-			cout << "No file with name: " << filepath << endl;
+			fprintf(stderr, "No file with name: %s\n", filepath);
 			erFlag = 1;
 		}
 	}
@@ -683,15 +629,16 @@ void Information::errorChecks()
 
 	if (erFlag == 1)
 	{
-		cout << "Exiting errorChecks() because of some error." << endl;
+		fprintf(stderr, "Exiting Information::errorChecks() because of some error.\n");
 		exit(0);
 	}
 
-	cout << "Exiting errorChecks() because no errors found." << endl;
+	fprintf(stderr, "Exiting Information::errorChecks() because no errors found.\n");
 }
 
 void Information::calculateCutoff()
 {
+	fprintf(stderr, "Inside Information::CalculateCutoff()\n");
 	float table[91][5] = {{1., 0.559349, 0.39004, 0.299751, 0.243506}, {1.1, 0.62054, 0.434484, 0.334715, 0.272346}, {1.2, 0.68246, 0.479754, 0.370477, 0.301926}, {1.3, 0.745061, 0.525809, 0.407005, 0.332225}, {1.4, 0.808296, 0.57261, 0.444271, 0.363221}, {1.5, 0.872124, 0.62012, 0.482245, 0.39489}, {1.6, 0.936504, 0.668302, 0.520897, 0.427211}, {1.7, 1.0014, 0.717119, 0.560199, 0.460161}, {1.8, 1.06677, 0.766538, 0.600123, 0.493716}, {1.9, 1.13259, 0.816526, 0.64064, 0.527854}, {2., 1.19882, 0.867051, 0.681723, 0.562553}, {2.1, 1.26543, 0.918084, 0.723347, 0.59779}, {2.2, 1.33241, 0.969594, 0.765486, 0.633543}, {2.3, 1.39971, 1.02156, 0.808114, 0.669793}, {2.4, 1.46733, 1.07394, 0.851208, 0.706516}, {2.5, 1.53523, 1.12673, 0.894744, 0.743694}, {2.6, 1.6034, 1.17989, 0.938702, 0.781306}, {2.7, 1.67182, 1.23341, 0.983059, 0.819334}, {2.8, 1.74046, 1.28725, 1.02779, 0.857758}, {2.9, 1.80933, 1.34142, 1.07289, 0.896561}, {3., 1.87839, 1.39587, 1.11832, 0.935725}, {3.1, 1.94763, 1.45061, 1.16408, 0.975234}, {3.2, 2.01705, 1.5056, 1.21015, 1.01507}, {3.3, 2.08662, 1.56084, 1.2565, 1.05522}, {3.4, 2.15635, 1.61631, 1.30313, 1.09567}, {3.5, 2.22621, 1.67199, 1.35002, 1.1364}, {3.6, 2.2962, 1.72787, 1.39715, 1.1774}, {3.7, 2.36631, 1.78395, 1.44451, 1.21866}, {3.8, 2.43653, 1.8402, 1.4921, 1.26016}, {3.9, 2.50685, 1.89662, 1.53989, 1.3019}, {4., 2.57727, 1.9532, 1.58788, 1.34386}, {4.1, 2.64777, 2.00992, 1.63605, 1.38602}, {4.2, 2.71836, 2.06679, 1.6844, 1.42839}, {4.3, 2.78902, 2.12378, 1.73292, 1.47094}, {4.4, 2.85975, 2.18089, 1.78159, 1.51368}, {4.5, 2.93055, 2.23812, 1.83041, 1.55659}, {4.6, 3.00141, 2.29545, 1.87936, 1.59965}, {4.7, 3.07233, 2.35289, 1.92845, 1.64288}, {4.8, 3.1433, 2.41042, 1.97767, 1.68625}, {4.9, 3.21432, 2.46804, 2.027, 1.72975}, {5., 3.28538, 2.52573, 2.07644, 1.77339}, {5.1, 3.35648, 2.58351, 2.12599, 1.81716}, {5.2, 3.42763, 2.64136, 2.17564, 1.86104}, {5.3, 3.4988, 2.69928, 2.22537, 1.90504}, {5.4, 3.57001, 2.75726, 2.2752, 1.94914}, {5.5, 3.64126, 2.8153, 2.32511, 1.99334}, {5.6, 3.71253, 2.8734, 2.3751, 2.03764}, {5.7, 3.78382, 2.93154, 2.42516, 2.08203}, {5.8, 3.85514, 2.98974, 2.47529, 2.12651}, {5.9, 3.92648, 3.04798, 2.52549, 2.17106}, {6., 3.99784, 3.10627, 2.57575, 2.2157}, {6.1, 4.06923, 3.16459, 2.62606, 2.26041}, {6.2, 4.14062, 3.22296, 2.67644, 2.30518}, {6.3, 4.21204, 3.28135, 2.72686, 2.35003}, {6.4, 4.28346, 3.33978, 2.77733, 2.39493}, {6.5, 4.3549, 3.39824, 2.82785, 2.4399}, {6.6, 4.42635, 3.45673, 2.87841, 2.48492}, {6.7, 4.49782, 3.51524, 2.92901, 2.52999}, {6.8, 4.56929, 3.57378, 2.97964, 2.57511}, {6.9, 4.64077, 3.63233, 3.03032, 2.62028}, {7., 4.71226, 3.69091, 3.08103, 2.6655}, {7.1, 4.78375, 3.74951, 3.13176, 2.71076}, {7.2, 4.85525, 3.80813, 3.18253, 2.75605}, {7.3, 4.92676, 3.86676, 3.23333, 2.80139}, {7.4, 4.99827, 3.92541, 3.28415, 2.84676}, {7.5, 5.06978, 3.98408, 3.33499, 2.89216}, {7.6, 5.1413, 4.04275, 3.38586, 2.9376}, {7.7, 5.21282, 4.10144, 3.43675, 2.98306}, {7.8, 5.28435, 4.16014, 3.48766, 3.02856}, {7.9, 5.35587, 4.21884, 3.53859, 3.07408}, {8., 5.4274, 4.27756, 3.58953, 3.11962}, {8.1, 5.49893, 4.33628, 3.64049, 3.16519}, {8.2, 5.57046, 4.39502, 3.69147, 3.21078}, {8.3, 5.64198, 4.45375, 3.74246, 3.25639}, {8.4, 5.71351, 4.5125, 3.79346, 3.30202}, {8.5, 5.78504, 4.57125, 3.84447, 3.34767}, {8.6, 5.85657, 4.63, 3.89549, 3.39334}, {8.7, 5.92809, 4.68876, 3.94653, 3.43902}, {8.8, 5.99962, 4.74752, 3.99757, 3.48472}, {8.9, 6.07114, 4.80628, 4.04862, 3.53043}, {9., 6.14266, 4.86504, 4.09968, 3.57615}, {9.1, 6.21418, 4.92381, 4.15075, 3.62189}, {9.2, 6.2857, 4.98258, 4.20182, 3.66764}, {9.3, 6.35721, 5.04135, 4.2529, 3.7134}, {9.4, 6.42872, 5.10012, 4.30398, 3.75916}, {9.5, 6.50023, 5.15889, 4.35507, 3.80494}, {9.6, 6.57174, 5.21766, 4.40616, 3.85073}, {9.7, 6.64324, 5.27643, 4.45725, 3.89652}, {9.8, 6.71474, 5.3352, 4.50835, 3.94232}, {9.9, 6.78624, 5.39397, 4.55945, 3.98813}, {10., 6.85773, 5.45273, 4.61055, 4.03394}};
 
 	cutoff = new float[5];
@@ -713,6 +660,7 @@ void Information::calculateCutoff()
  *******************************************************************/
 void Information::genMJDObs()
 {
+	fprintf(stderr, "Inside Information::genMJDObs()\n");
 	int YYYY, MM, DD, HH, mm, SS, ss;
 	stringstream convertTime;
 	long int nanoseconds;
@@ -805,6 +753,7 @@ void Information::genMJDObs()
  *******************************************************************/
 void Information::getPsrcatdbPath()
 {
+	fprintf(stderr, "Inside Information::getPsrcatdbPath()\n");
 	stringstream checkPsrcatCommand;
 	checkPsrcatCommand << "echo $PSRCAT_FILE | awk 'FNR ==1 {print}' > dbpath";
 	system(checkPsrcatCommand.str().c_str());
@@ -825,7 +774,7 @@ void Information::getPsrcatdbPath()
 		eof = path->tellg();
 		if ((int)eof == 0)
 		{
-			cout << "No psrcat.db found!" << endl;
+			fprintf(stderr, "No psrcat.db found!\n");
 			exit(0);
 		}
 	}
@@ -844,6 +793,7 @@ void Information::getPsrcatdbPath()
  *******************************************************************/
 void Information::checkPulsarName()
 {
+	fprintf(stderr, "Inside Information::checkPulsarName()\n");
 	// Generate JName and check if source name is valid
 	stringstream JNameGen;
 	JNameGen << "psrcat -db_file " << psrcatdbPath << " -e " << pulsarName << " | grep PSRJ | awk '{print $2}' > JNamePulsar";
@@ -868,7 +818,8 @@ void Information::checkPulsarName()
  *******************************************************************/
 void Information::display()
 {
-	cout << "Inside display()." << endl;
+	fprintf(stderr, "Inside Information::display()\n");
+
 	stringstream displays;
 	displays << endl
 			 << "ajax ver 4.6 (optimized for Band-4 FRB detection)" << endl;
@@ -1032,7 +983,7 @@ void Information::display()
 	f << displays.str().c_str() << endl
 	  << endl;
 	f << "--------------------------------------------" << endl;
-	cout << "Exiting display()." << endl;
+	fprintf(stderr, "Exiting Information::display()\n");
 }
 
 /*******************************************************************
@@ -1065,6 +1016,7 @@ void Information::displayNoOptionsHelp()
  *******************************************************************/
 void Information::writeInfFile()
 {
+	fprintf(stderr, "Inside Information::writeInfFile()\n");
 	// Getting RA and DEC from atnf psrcat
 	string RA;
 	string DEC;
@@ -1129,6 +1081,7 @@ void Information::writeInfFile()
  *******************************************************************/
 void Information::writeWpmonIn()
 {
+	fprintf(stderr, "Inside Information::writeWpmonIn()\n");
 	ofstream inFile("ajax.in", ios::out);
 	inFile << "#*#*#ajax input file v2.0#*#*#" << endl;
 	inFile << "-------------------------------------------------" << endl;

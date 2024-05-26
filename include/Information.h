@@ -100,9 +100,6 @@ class Information
 	//Functions:
 	double 			stringToDouble(const std::string& s);		// Converts strings to double, used to take input from .in file
 	void 			readAjaxInputFile();						// Function to read from .in file
-	short int 		checkAjaxInputFileVersion();				// Checks if ajax.in has the latest version formatting.
-	void 			reformatAjaxInputFile();					// reformats ajax.in file to latest version
-	void 			cutOffCalculations();						// calculates the double,triple and quadrapule point cutoffs
 	void 			display();									// Displays all input information to the user
 	void 			writeWpmonIn();								// Writes out a ajax.in sample when it is not found.
 	void 			writeInfFile();								// Writes out INF file to be used by presto
