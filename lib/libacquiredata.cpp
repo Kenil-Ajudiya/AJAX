@@ -299,7 +299,8 @@ void AcquireData::readDataFromMultipleFiles(int iBeam)
 	long int blockSizeBytes = nChannel * info.noOfPol * blockLength * info.sampleSizeBytes; // Number of bytes to read in each block	// Number of bytes that have already been read
 
 	ifstream datafile;
-	fprintf(stderr, "File to be read is: %s", info.filepath + to_string(iBeam));
+	fprintf(stderr, "File to be read, info.filepath + to_string(iBeam), is: ");
+	cout << info.filepath + to_string(iBeam) << endl;
 	datafile.open(info.filepath + to_string(iBeam), ios::binary);
 	datafile.seekg(curPos, ios::beg);
 	// logic to handle reading last block

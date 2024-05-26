@@ -83,7 +83,6 @@ public:
 
 ThreadPacket::ThreadPacket(int noOfPol_)
 {
-	fprintf(stderr, "Inside ThreadPacket::ThreadPacket(int noOfPol_) Constructor.\n");
 	noOfPol = noOfPol_;
 	acquireData = NULL;
 	basicAnalysis = new BasicAnalysis *[noOfPol];

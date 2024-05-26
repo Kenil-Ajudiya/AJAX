@@ -9,7 +9,6 @@ using namespace std;
  *******************************************************************/
 double Information::stringToDouble(const std::string &s)
 {
-	fprintf(stderr, "Inside Information::stringToDouble(const std::string &s)\n");
 	istringstream i(s);
 	double x;
 	if (!(i >> x))
