@@ -29,10 +29,9 @@ public:
 	static int 				currentReadBlock;
 	static int 				remainingData;
 	static timeval*			startTimeStamp;
-	static float 			buffSizeSec;
 	static int 				nbuff;
 	static Correlator*		shmInterface;
-	static long int 		bufferBlockLengthProcess;
+	static long int 		bufferBlockLength;
 	// Variables:
 	unsigned char*			rawDataChar; 				// 1-byte integer read data is stored here
 	char*					rawDataCharPolar;			// 1-byte integer read data is stored here
@@ -53,11 +52,8 @@ public:
 	AcquireData(Information _info);			   			// Constructor for first time intialization, the static variables are initialized here.
 	AcquireData(int _blockIndex);			   			// Constructor to intialize non-static me
 	~AcquireData();							   			// *****WHAT IS THIS FOR???*****
-	void readData(int iBeam);				   			// Calls appropiate data reading function for the multi-beam version.
-	void readDataFromMultipleFiles(int iBeam); 			// Reads from  multiple files for multi-beam version.
+	int readData(int iBeam);				   			// Calls appropiate data reading function for the multi-beam version.
 	void initializeSHM();					   			// Attaches to SHM
-	void initializeSHM_SPOTLIGHT();			   			// attaches to SPOTLIGHT SHM
-	int readFromSHM_SPOTLIGHT();			   			// Reads from process SHM
 	void splitRawData();
 	void averageRawData(int nIntTime, int nIntFreq);
 };

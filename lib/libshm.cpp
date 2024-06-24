@@ -199,16 +199,8 @@ int Correlator::initializeWriteSHM_SPOTLIGHT(char fileSHM)
 {
 	fprintf(stderr, "Inside Correlator::initializeWriteSHM_SPOTLIGHT()\n");
 	int idDataHdr, idDataBuffer;
-	if (!fileSHM)
-	{
-		idDataBuffer = shmget(DasBufferKey, sizeof(DataBuffer), IPC_CREAT | 0666);
-		idDataHdr = shmget(DasHeaderKey, sizeof(DataHeader), IPC_CREAT | 0666);
-	}
-	else
-	{
-		idDataBuffer = shmget(DasBufferKey_SIM, sizeof(DataBuffer), IPC_CREAT | 0666);
-		idDataHdr = shmget(DasHeaderKey_SIM, sizeof(DataHeader), IPC_CREAT | 0666);
-	}
+	idDataBuffer = shmget(DasBufferKey, 50 * sizeof(DataBuffer), IPC_CREAT | 0666);	// Un-hardcode the number 50 with the nBeams.
+	idDataHdr = shmget(DasHeaderKey, 50 * sizeof(DataHeader), IPC_CREAT | 0666);	// Un-hardcode the number 50 with the nBeams.
 
 	fprintf(stderr, "idDataHdr: %d\nidDataBuffer: %d\n", idDataHdr, idDataBuffer);
 

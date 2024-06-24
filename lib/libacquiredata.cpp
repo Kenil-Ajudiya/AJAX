@@ -13,9 +13,8 @@ int AcquireData::remainingData = 0;
 int AcquireData::currentReadBlock = 0;
 long int AcquireData::curPos = 0;
 double AcquireData::totalError = 0.0;
-float AcquireData::buffSizeSec;
 int AcquireData::nbuff;
-long int AcquireData::bufferBlockLengthProcess;
+long int AcquireData::bufferBlockLength;
 struct timeval *AcquireData::startTimeStamp;
 Correlator *AcquireData::shmInterface;
 
@@ -32,28 +31,7 @@ AcquireData::AcquireData(Information _info)
 	hasReachedEof = 0;
 	totalError = 0.0;
 	remainingData = 0;
-	// finding length of data file or initializing SHM according to the mode of operation
-	if (info.doReadFromFile)
-	{
-		fprintf(stderr, "Inside AcquireData(Information _info) Constructor, info.filepath is: %s\n", info.filepath);
-		ifstream datafile;
-		datafile.open(info.filepath + to_string(0), ios::binary);
-		if (!datafile.is_open())
-		{
-			fprintf(stderr, "Raw data file not found!\n");
-			exit(1);
-		}
-		datafile.seekg(0, ios::end);
-		eof = datafile.tellg();
-		datafile.close();
-		if (eof == 0)
-		{
-			fprintf(stderr, "DATA FILE EMPTY!\n");
-			exit(1);
-		}
-	}
-	// else
-	// initializeSHM();
+	initializeSHM();
 }
 
 /*******************************************************************
@@ -105,90 +83,19 @@ AcquireData::~AcquireData()
 }
 
 /*******************************************************************
- *FUNCTION: void BasicAnalysis::readData()
- *Wrapper to decide which method to call to acquire data
- *******************************************************************/
-void AcquireData::readData(int iBeam)
-{
-	fprintf(stderr, "AcquireData::readData(iBeam: %d)\n", iBeam);
-	double er = info.blockSizeSec / info.samplingInterval;
-	er = er - (long)er;
-	totalError += er;
-	blockLength = info.blockSizeSamples * info.timeIntFactor;
-	nChannel = info.noOfChannels * info.freqIntFactor;
-	if (!info.isInline && info.timeIntFactor == 1 && (info.shmID <= 3) && totalError >= 1.0)
-	{
-		blockLength++;
-		totalError--;
-	}
-	if (info.doReadFromFile)
-		readDataFromMultipleFiles(iBeam);
-	else
-	{
-		if (info.shmID == 4 or info.shmID == 5)
-		{
-			long samplesToTake = nChannel * info.noOfPol * blockLength * info.sampleSizeBytes;
-			rawDataChar = new unsigned char[blockLength * info.noOfPol * nChannel];
-			shmInterface->readFromSHM_SPOTLIGHT(rawDataChar);
-		}
-		else if (info.shmID == 7)
-			readFromSHM_SPOTLIGHT();
-	}
-}
-
-/*******************************************************************
  *FUNCTION: void AcquireData::initializeSHM()
  *Initializes shared memory of GSB/GWB
  *******************************************************************/
 void AcquireData::initializeSHM()
 {
 	fprintf(stderr, "AcquireData::initializeSHM()\n");
-	int iddataHdr, idDataBuffer;
-	if (info.isInline && !info.doFRB && info.shmID <= 3)
-	{
-		buffSizeSec = (info.samplingInterval * info.timeIntFactor * info.freqIntFactor * (dataBuffer->blocksize - 4096) / (info.sampleSizeBytes * info.noOfChannels));
-		nbuff = (int)floor(info.blockSizeSec / buffSizeSec);
-		info.blockSizeSec = nbuff * buffSizeSec;
-		info.blockSizeSamples = (int)round(info.blockSizeSec / info.samplingInterval);
-	}
-	else if (info.doFRB || info.shmID >= 4)
-	{
-		buffSizeSec = info.samplingInterval * info.timeIntFactor * info.freqIntFactor * ((long)DataSize / (info.noOfChannels));
-		nbuff = 1;
-		info.blockSizeSec = nbuff * buffSizeSec;
-		info.blockSizeSamples = info.timeIntFactor * info.freqIntFactor * (long)DataSize / info.noOfChannels;
-	}
-	switch (info.shmID)
-	{
-	case 4: // FRB shm
-		// file shm
-		fprintf(stderr, "Attempting to attach to file simulator FRB SHM.\n");
-		shmInterface = new Correlator(info.noOfChannels, info.samplingInterval);
-		shmInterface->initializeReadSHM_SPOTLIGHT(1);
-		break;
-	case 5: // FRB file shm
-		// file shm
-		fprintf(stderr, "Attempting to attach to FRB SHM.\n");
-		shmInterface = new Correlator(info.noOfChannels, info.samplingInterval);
-		shmInterface->initializeReadSHM_SPOTLIGHT(0);
-		break;
-	case 7:
-		// process psr shm
-		fprintf(stderr, "Attempting to attach to SPOTLIGHT SHM.\n");
-		initializeSHM_SPOTLIGHT();
-		break;
-	}
-}
+	info.blockSizeSamples = info.timeIntFactor * info.freqIntFactor * (long)DataSize / info.noOfChannels; // Removed buffSizeSec and nbuff because they are redundant.
+	info.blockSizeSec = info.samplingInterval * info.blockSizeSamples;									  // DataSize is the size of 1 block of FRB_SHM
 
-void AcquireData::initializeSHM_SPOTLIGHT()
-{
-	fprintf(stderr, "AcquireData::initializeSHM_SPOTLIGHT()\n");
-	bufferBlockLengthProcess = TEL_SHM_BlockSize; // 3.175 MB for 800 time samples and 4096 channel; 1.31072 ms.
-
-	int local_ExtraBuf = 64;
-	int CurrShmDataSize = (((MaxRecs + 1) * bufferBlockLengthProcess + local_ExtraBuf) / PageSize + 1) * PageSize;
-	int local_ShmDataOff = ((sizeof(GlobalInfoType) + local_ExtraBuf) / PageSize + 1) * PageSize;
-	int CurrShmSize = local_ShmDataOff + CurrShmDataSize;
+	fprintf(stderr, "Inside initializeSHM(), info.blockSizeSamples: %ld\n", info.blockSizeSamples);
+	nbuff = 1;									// This is just to say that write 1 buffer at a time.
+	bufferBlockLength = TEL_SHM_BlockSize * 50; // 3.175 MB for 800 time samples and 4096 channel; 1.31072 ms.
+	long int CurrShmSize = 1474568192; // This number must be un-hardcoded before proceeding. Contact Sanjay!!!
 	int idDataBuffer = shmget(ShmKey, CurrShmSize, 0);
 	fprintf(stderr, "idDataBuffer: %d\n", idDataBuffer);
 	if (idDataBuffer < 0)
@@ -204,18 +111,25 @@ void AcquireData::initializeSHM_SPOTLIGHT()
 	}
 
 	cout << "Attached to SPOTLIGHT shared memory: " << dataBufferProcess << endl;
-	fprintf(stderr, "Max no of blocks: %d", MaxRecs);
+	cout << "Pointer addresses and sizes: " << sizeof(GlobalInfoType) << "\t" << dataBufferProcess + sizeof(GlobalInfoType) << "\t" << &(dataBufferProcess->rec_ind) << "\t" << 9 * sizeof(double) + 15 * sizeof(int) << endl;
+	fprintf(stderr, "Max no of blocks: %d\n", MaxRecs);
 
-	recNum = (dataBufferProcess->rec_ind + MaxRecs - 3) % MaxRecs;
+	recNum = dataBufferProcess->rec_ind;
 	currentReadBlock = dataBufferProcess->rec[recNum].rec_seq;
+	fprintf(stderr, "Exiting AcquireData::initializeSHM()\n");
 }
 
-int AcquireData::readFromSHM_SPOTLIGHT()
+int AcquireData::readData(int iBeam)
 {
-	fprintf(stderr, "AcquireData::readFromSHM_SPOTLIGHT()\n");
+	fprintf(stderr, "\nInside AcquireData::readData(iBeam: %d)\n", iBeam);
+	double er = info.blockSizeSec / info.samplingInterval;
+	er = er - (long)er;
+	totalError += er;
+	blockLength = info.blockSizeSamples * info.timeIntFactor;
+	nChannel = info.noOfChannels * info.freqIntFactor;
 	int DataOff = 4096;
-
 	long samplesToTake = nChannel * info.noOfPol * blockLength * info.sampleSizeBytes;
+
 	rawDataChar = new unsigned char[blockLength * info.noOfPol * nChannel];
 	long int fetched = 0;
 	ofstream meanFile;
@@ -223,22 +137,22 @@ int AcquireData::readFromSHM_SPOTLIGHT()
 	ofstream recordFile;
 	recordFile.open("blockLossRecord.gpt", ios::app);
 	char *shmp = (char *)dataBufferProcess;
+
 	while (fetched < samplesToTake)
 	{
 		timeWaitTime += omp_get_wtime();
 		int flag = 0;
-
-		while (dataBufferProcess->rec[recNum].rec_flag & Marked)
+		while (dataBufferProcess->rec[recNum].rec_flag & Marked) // We are not getting a flag here
 		{
 			usleep(2000);
 			if (flag == 0)
 			{
-				fprintf(stderr, "Waiting for flag...");
+				fprintf(stderr, "Waiting for flag...\t");
 				flag = 1;
 			}
 		}
 		if (flag == 1)
-			fprintf(stderr, "Got a flag. Ready!");
+			fprintf(stderr, "Got a flag. Ready!\n");
 
 		timeWaitTime -= omp_get_wtime();
 		currentReadBlock = dataBufferProcess->rec[recNum].rec_seq;
@@ -248,7 +162,8 @@ int AcquireData::readFromSHM_SPOTLIGHT()
 		int curInd = dataBufferProcess->rec_ind - 1;
 		if (curInd < 0)
 			curInd = 0;
-		if (dataBufferProcess->rec[curInd].rec_seq >= currentReadBlock + MaxRecs - 2)
+
+		if (dataBufferProcess->rec[curInd].rec_seq >= currentReadBlock + MaxRecs - 2) // Realigning to compensate for the lag.
 		{
 			meanFile << "Lag in block " << blockIndex << endl;
 			meanFile << "recNum = " << recNum << ", Reading Sequence: " << currentReadBlock << "dataBufferProcess->blk_seq[ind]" << dataBufferProcess->blk_seq[ind] << endl;
@@ -260,19 +175,20 @@ int AcquireData::readFromSHM_SPOTLIGHT()
 			recNum = (dataBufferProcess->rec_ind + MaxRecs - 2) % MaxRecs;
 			currentReadBlock = dataBufferProcess->rec[recNum].rec_seq;
 		}
+
 		timestamp_gps = dataBufferProcess->rec[recNum].timestamp_gps;
 		fprintf(stderr, "recNum: %d; currentReadBlock: %d\n", recNum, currentReadBlock); // Collect's Sequence: dataBuffer->cur_block-1;
 		unsigned char *bufptr = (unsigned char *)(shmp + dataBufferProcess->rec[recNum].beg_off + remainingData);
-		if (samplesToTake - fetched >= bufferBlockLengthProcess - remainingData)
+		if (samplesToTake - fetched >= bufferBlockLength - remainingData)
 		{
 			if (info.isInline)
 			{
 				// memcpy(headerInfo+nBuffTaken*DataOff, dataBuffer->buf+dataTab[recNum].rec*(dataBuffer->blocksize), DataOff);
 				nBuffTaken++;
 			}
-			memcpy(rawDataChar + fetched / sizeof(char), bufptr, bufferBlockLengthProcess - remainingData);
+			memcpy(rawDataChar + fetched / sizeof(char), bufptr, bufferBlockLength - remainingData);
 
-			fetched += (bufferBlockLengthProcess - remainingData);
+			fetched += (bufferBlockLength - remainingData);
 			recNum = (recNum + 1) % MaxRecs;
 			remainingData = 0;
 		}
@@ -285,38 +201,75 @@ int AcquireData::readFromSHM_SPOTLIGHT()
 	}
 	curPos += samplesToTake;
 	meanFile.close();
+	fprintf(stderr, "Exiting AcquireData::readData(iBeam: %d)\n\n\n", iBeam);
 	return 1;
 }
 
-/*******************************************************************
- *FUNCTION: void AcquireData::readDataFromFile()
- *In offline mode reads raw data from a file
- *******************************************************************/
-void AcquireData::readDataFromMultipleFiles(int iBeam)
-{
-	fprintf(stderr, "Inside AcquireData::readDataFromMultipleFiles(iBeam: %d\n)", iBeam);
-	int c, i;
-	long int blockSizeBytes = nChannel * info.noOfPol * blockLength * info.sampleSizeBytes; // Number of bytes to read in each block	// Number of bytes that have already been read
+// int AcquireData::readData(int iBeam)
+// {
+// 	fprintf(stderr, "\nInside AcquireData::readData(iBeam: %d)\n", iBeam);
+// 	double er = info.blockSizeSec / info.samplingInterval;
+// 	er = er - (long)er;
+// 	totalError += er;
+// 	blockLength = info.blockSizeSamples * info.timeIntFactor;
+// 	nChannel = info.noOfChannels * info.freqIntFactor;
 
-	ifstream datafile;
-	fprintf(stderr, "File to be read, info.filepath + to_string(iBeam), is: ");
-	cout << info.filepath + to_string(iBeam) << endl;
-	datafile.open(info.filepath + to_string(iBeam), ios::binary);
-	datafile.seekg(curPos, ios::beg);
-	// logic to handle reading last block
-	if (curPos + blockSizeBytes > eof)
-	{
-		blockSizeBytes = eof - curPos;
-		blockLength = blockSizeBytes / (info.sampleSizeBytes * nChannel * info.noOfPol); // The number of time samples
-		hasReachedEof = 1;
-	}
+// 	rawDataChar = new unsigned char[bufferBlockLength];
+// 	ofstream meanFile;
+// 	meanFile.open("realTimeWarning.gpt", ios::app);
+// 	ofstream recordFile;
+// 	recordFile.open("blockLossRecord.gpt", ios::app);
+// 	char *shmp = (char *)dataBufferProcess;
 
-	rawDataChar = new unsigned char[blockSizeBytes / info.sampleSizeBytes];
-	datafile.read((char *)rawDataChar, blockSizeBytes);
+// 	timeWaitTime += omp_get_wtime();
+// 	int flag = 0;
+// 	recNum = dataBufferProcess->rec_ind;
+// 	fprintf(stderr, "dataBufferProcess->rec[recNum: %d].rec_flag: %u.\n", recNum, dataBufferProcess->rec[recNum].rec_flag);
+// 	while (dataBufferProcess->rec[recNum].rec_flag & Marked) // We are not getting a flag here
+// 	{
+// 		usleep(2000);
+// 		if (flag == 0)
+// 		{
+// 			fprintf(stderr, "Waiting for flag...\t");
+// 			flag = 1;
+// 		}
+// 	}
+// 	if (flag == 1)
+// 		fprintf(stderr, "Got a flag. Ready!\n");
 
-	datafile.close();
-	curPos += blockSizeBytes;
-}
+// 	timeWaitTime -= omp_get_wtime();
+// 	currentReadBlock = dataBufferProcess->rec[recNum].rec_seq;
+
+// 	int ind = dataBufferProcess->blk_ind > 0 ? dataBufferProcess->blk_ind - 1 : MaxBLK - 1;
+
+// 	int curInd = dataBufferProcess->rec_ind - 1;
+// 	if (curInd < 0)
+// 		curInd = 0;
+
+// 	if (dataBufferProcess->rec[curInd].rec_seq >= currentReadBlock + MaxRecs - 2) // Realigning to compensate for the lag.
+// 	{
+// 		meanFile << "Lag in block " << blockIndex << endl;
+// 		meanFile << "recNum = " << recNum << ", Reading Sequence: " << currentReadBlock << "dataBufferProcess->blk_seq[ind]" << dataBufferProcess->blk_seq[ind] << endl;
+// 		fprintf(stderr, "recNum: %d; currentReadBlock: %d; rec_seq: %u\n", recNum, currentReadBlock, dataBufferProcess->rec[curInd].rec_seq);
+// 		fprintf(stderr, "Difference, i.e., lag: %u\n", dataBufferProcess->rec[curInd].rec_seq - currentReadBlock);
+// 		fprintf(stderr, "Max no of blocks - 2 = %d\n", MaxRecs - 2);
+// 		fprintf(stderr, "Processing lagged behind...\n");
+
+// 		recNum = (dataBufferProcess->rec_ind + MaxRecs - 2) % MaxRecs;
+// 		currentReadBlock = dataBufferProcess->rec[recNum].rec_seq;
+// 	}
+
+// 	timestamp_gps = dataBufferProcess->rec[recNum].timestamp_gps;
+// 	fprintf(stderr, "recNum: %d; currentReadBlock: %d\n", recNum, currentReadBlock); // Collect's Sequence: dataBuffer->cur_block-1;
+// 	unsigned char *bufptr = (unsigned char *)(shmp + dataBufferProcess->rec[recNum].beg_off + iBeam * bufferBlockLength);
+// 	nBuffTaken++;
+// 	memcpy(rawDataChar, bufptr, bufferBlockLength);
+// 	recNum = (recNum + 1) % MaxRecs;
+// 	curPos += bufferBlockLength;
+// 	meanFile.close();
+// 	fprintf(stderr, "Exiting AcquireData::readData(iBeam: %d)\n\n", iBeam);
+// 	return 1;
+// }
 
 float u16tofloat(short x)
 {
@@ -348,16 +301,12 @@ void AcquireData::splitRawData()
 	float **ptrSplittedRawData = new float *[info.noOfPol];
 	int nChan = info.noOfChannels * info.freqIntFactor;
 	long int length = blockLength * nChan;
+	fprintf(stderr, "Inside splitRawData(), blockLength: %ld; info.blockSizeSamples: %ld\n", blockLength, info.blockSizeSamples);
 	for (int k = 0; k < info.noOfPol; k++)
 	{
 		splittedRawData[k] = new float[length];
 		ptrSplittedRawData[k] = splittedRawData[k];
 	}
-	/*******************************************************************
-	 *Handles different data types. GMRT data is mostly of type short while
-	 *certain processed data maybe floating point.
-	 *******************************************************************/
-
 	float *ptrRawDataFloat = rawDataFloat;
 	switch (info.sampleSizeBytes)
 	{

@@ -22,7 +22,7 @@ double Information::stringToDouble(const std::string &s)
  *******************************************************************/
 void Information::readAjaxInputFile()
 {
-	fprintf(stderr, "Inside Information::readAjaxInputFile()\n");
+	fprintf(stderr, "\n\n\nInside Information::readAjaxInputFile()\n");
 	char *fileparstr = "ajax.in";
 	string line;
 	int k = 1, CompleteFlag = 0;
@@ -315,7 +315,6 @@ void Information::readAjaxInputFile()
 		exit(0);
 	}
 
-	//	calculateCutoff();
 	errorChecks();
 	fprintf(stderr, "Exiting Information::readAjaxInputFile()\n");
 }
@@ -386,31 +385,21 @@ void Information::parseManFlagList(std::string &s)
 	}
 }
 
-void Information::fillParams()
-{
-	fprintf(stderr, "Inside Information::fillParams()\n");
-	if (doRunFilteredMode) // rerun of .gpt output file. No filtering/
-	{
-		doChanFlag = 0;
-		doTimeFlag = 0;
-		bandshapeToUse = 1;
-		doUseNormalizedData = 0;
-		doReplaceByMean = 0;
-		doWriteFiltered2D = 0;
-	}
-	if (blockSizeSec == 0) // Setting blocksize equal to pulsar period
-		blockSizeSec = periodInMs / 1000.0;
-	blockSizeSamples = blockSizeSec / samplingInterval;
-	startBlockIndex = floor(startTime / blockSizeSec);
-	if (!doFilteringOnly)
-		writeInfFile();
-	if (doReadFromFile)
-	{
-		string temp = filepath + to_string(0);
-		int slashpos = temp.find_last_of("/");
-		filename = temp.substr(slashpos + 1);
-	}
-}
+// void Information::fillParams()
+// {
+// 	fprintf(stderr, "Inside Information::fillParams()\n");
+// 	if (doRunFilteredMode) // rerun of .gpt output file. No filtering/
+// 	{
+// 		doChanFlag = 0;
+// 		doTimeFlag = 0;
+// 		bandshapeToUse = 1;
+// 		doUseNormalizedData = 0;
+// 		doReplaceByMean = 0;
+// 		doWriteFiltered2D = 0;
+// 	}
+// 	blockSizeSamples = blockSizeSec / samplingInterval;
+// 	startBlockIndex = floor(startTime / blockSizeSec);
+// }
 
 void Information::errorChecks()
 {
@@ -747,71 +736,6 @@ void Information::genMJDObs()
 }
 
 /*******************************************************************
- *FUNCTION: void Information::getPsrcatdbPath()
- *Locates the psrcat database file.
- *******************************************************************/
-void Information::getPsrcatdbPath()
-{
-	fprintf(stderr, "Inside Information::getPsrcatdbPath()\n");
-	stringstream checkPsrcatCommand;
-	checkPsrcatCommand << "echo $PSRCAT_FILE | awk 'FNR ==1 {print}' > dbpath";
-	system(checkPsrcatCommand.str().c_str());
-
-	ifstream *path = new ifstream("dbpath", ios::in);
-	path->seekg(0, ios::end);
-	size_t eof = path->tellg();
-	if ((int)eof <= 2)
-	{
-		path->close();
-		system("rm -rf dbpath");
-
-		stringstream dbPathCommand;
-		dbPathCommand << "locate \"psrcat.db\" | awk 'FNR == 1 {print}' > dbpath";
-		system(dbPathCommand.str().c_str());
-		path = new ifstream("dbpath", ios::in);
-		path->seekg(0, ios::end);
-		eof = path->tellg();
-		if ((int)eof == 0)
-		{
-			fprintf(stderr, "No psrcat.db found!\n");
-			exit(0);
-		}
-	}
-	psrcatdbPath = new char[(int)eof];
-	path->seekg(0, ios::beg);
-	path->getline(psrcatdbPath, eof);
-	path->close();
-	system("rm -rf dbpath");
-}
-
-/*******************************************************************
- *FUNCTION: void Information::checkPulsarName()
- *Verify pulsar name with psr cat and see if its valid.
- *In case B name is specified this routine also gets the correspoding
- *J name.
- *******************************************************************/
-void Information::checkPulsarName()
-{
-	fprintf(stderr, "Inside Information::checkPulsarName()\n");
-	// Generate JName and check if source name is valid
-	stringstream JNameGen;
-	JNameGen << "psrcat -db_file " << psrcatdbPath << " -e " << pulsarName << " | grep PSRJ | awk '{print $2}' > JNamePulsar";
-	system(JNameGen.str().c_str());
-	ifstream JName("JNamePulsar", ios::in);
-	JName.seekg(0, ios::end);
-	if (int(JName.tellg()) == 0)
-	{
-		cout << "Error in line 14 of ajax.in:" << endl;
-		cout << "Incorrect pulsar name." << endl;
-		exit(1);
-	}
-	JName.seekg(0, ios::beg);
-	JName >> pulsarName;
-	JName.close();
-	system("rm -rf JNamePulsar");
-}
-
-/*******************************************************************
  *FUNCTION: void Information::display()
  *Displays all run parameters to the terminal
  *******************************************************************/
@@ -994,7 +918,6 @@ void Information::displayNoOptionsHelp()
 	cout << "ajax [OPTIONS]\n\n\
     [OPTIONS]\n\n\
             -f filename                 : Read from GMRT format file filename\n\
-            -I shmID                    : shmID =	1 -> Standard collect_psr shm \n\t\t\t\t\t\t\t2-> File simulator shm \n\t\t\t\t\t\t\t3-> Inline ajax shm\n\t\t\t\t\t\t\t6-> process_psr shm\n\t\t\t\t\t\t\t7-> SPOTLIGHT shm\n\
             -s start_time_in_sec        : start processing the file after skipping some time\n\
             -o output_2D_filtered_file  : path to GMRT format filtered output file\n\
             -m mean_value_of_2D_op      : mean value of output filtered file. This is the value by which the ajax normalized data is scaled by before writing out filtered file\n\
@@ -1006,72 +929,6 @@ void Information::displayNoOptionsHelp()
             -C chAvgFactor              : channel integration factor\n\
             -T timeAvgFactor            : time integration factor\n\
             -h, -H, {-help}, {-Help}    : print this help and exit\n";
-}
-
-/*******************************************************************
- *FUNCTION: void Information::generateInfFile()
- *Writes a fullDM_filtered.inf to be used by presto to process the
- *dedispersed series generated
- *******************************************************************/
-void Information::writeInfFile()
-{
-	fprintf(stderr, "Inside Information::writeInfFile()\n");
-	// Getting RA and DEC from atnf psrcat
-	string RA;
-	string DEC;
-	if (psrcatdbPath != NULL)
-	{
-		stringstream RACommand;
-		RACommand << "psrcat -db_file " << psrcatdbPath << " -e " << pulsarName << " | grep RAJ | awk '{print $2}' > RAJ";
-		system(RACommand.str().c_str());
-		ifstream RAJ("RAJ", ios::in);
-		RAJ >> RA;
-		RAJ.close();
-		system("rm -rf RAJ");
-
-		stringstream DECCommand;
-		DECCommand << "psrcat -db_file " << psrcatdbPath << " -e " << pulsarName << " | grep DECJ | awk '{print $2}' > DECJ";
-		system(DECCommand.str().c_str());
-		ifstream DECJ("DECJ", ios::in);
-		DECJ >> DEC;
-		DECJ.close();
-		system("rm -rf DECJ");
-	}
-	else
-	{
-		RA = "";
-		DEC = "";
-	}
-	stringstream fileOutput;
-	fileOutput << "Telescope used\t\t\t\t= " << "GMRT" << endl;
-	fileOutput << "Instrument used\t\t\t\t= " << "GWB" << endl;
-	fileOutput << "Object being observed\t\t\t= " << &pulsarName[1] << endl;
-	fileOutput << "J2000 Right Ascension (hh:mm:ss.ssss)\t= " << RA << endl;
-	fileOutput << "J2000 Declination     (dd:mm:ss.ssss)\t= " << DEC << endl;
-	fileOutput << "Data observed by\t\t\t= " << "GMRT" << endl;
-	fileOutput << "Epoch of observation (MJD)\t\t= " << setprecision(12) << MJDObs << endl;
-	fileOutput << "Barycentered?           (1=yes, 0=no)\t= " << "0" << endl;
-	fileOutput << "Number of bins in the time series\t= " << endl;
-	fileOutput << "Width of each time series bin (sec)\t= " << setprecision(12) << samplingInterval << endl;
-	fileOutput << "Any breaks in the data? (1=yes, 0=no)\t= " << "0" << endl;
-	fileOutput << "Type of observation (EM band)\t\t= " << "Radio" << endl;
-	fileOutput << "Beam diameter (arcsec)\t\t\t= " << endl;
-	fileOutput << "Dispersion measure (cm-3 pc)\t\t= " << dispersionMeasure << endl;
-	fileOutput << "Central freq of low channel (Mhz)\t= " << lowestFrequency << endl;
-	fileOutput << "Total bandwidth (Mhz)\t\t\t= " << bandwidth << endl;
-	fileOutput << "Number of channels\t\t\t= " << 1 << endl;
-	fileOutput << "Channel bandwidth (Mhz)\t\t\t= " << bandwidth / noOfChannels << endl;
-	fileOutput << "Data analyzed by\t\t\t= " << "ajax" << endl;
-
-	ofstream inFilteredFile("fullDM_filtered.inf", ios::out);
-	inFilteredFile << "Data file name without suffix\t\t= " << "fullDM_filtered" << endl;
-	inFilteredFile << fileOutput.str().c_str();
-	inFilteredFile.close();
-
-	ofstream inUnFilteredFile("fullDM_unfiltered.inf", ios::out);
-	inUnFilteredFile << "Data file name without suffix\t\t= " << "fullDM_unfiltered" << endl;
-	inUnFilteredFile << fileOutput.str().c_str();
-	inUnFilteredFile.close();
 }
 
 /*******************************************************************

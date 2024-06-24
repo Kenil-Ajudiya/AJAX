@@ -83,6 +83,7 @@ public:
 
 ThreadPacket::ThreadPacket(int noOfPol_)
 {
+	fprintf(stderr, "Inside ThreadPacket() Constructor.\n");
 	noOfPol = noOfPol_;
 	acquireData = NULL;
 	basicAnalysis = new BasicAnalysis *[noOfPol];
@@ -100,6 +101,7 @@ ThreadPacket::ThreadPacket(int noOfPol_)
 		advancedAnalysis[k] = NULL;
 		advancedAnalysisOld[k] = NULL;
 	}
+	fprintf(stderr, "Exiting ThreadPacket() Constructor.\n");
 }
 
 ThreadPacket::~ThreadPacket()
@@ -125,6 +127,7 @@ void ThreadPacket::copy(ThreadPacket *threadPacket)
 		rFIFilteringChan[k] = threadPacket->rFIFilteringChan[k];
 		advancedAnalysis[k] = threadPacket->advancedAnalysis[k];
 	}
+	fprintf(stderr, "Exiting ThreadPacket::copy(ThreadPacket *threadPacket).\n");
 }
 
 void ThreadPacket::copySelect(ThreadPacket *threadPacket)
@@ -138,11 +141,12 @@ void ThreadPacket::copySelect(ThreadPacket *threadPacket)
 		advancedAnalysis[k] = threadPacket->advancedAnalysis[k];
 		advancedAnalysisOld[k] = threadPacket->advancedAnalysisOld[k];
 	}
+	fprintf(stderr, "Exiting ThreadPacket::copySelect(ThreadPacket *threadPacket).\n");
 }
 
 void ThreadPacket::freeMem()
 {
-	fprintf(stderr, "Inside ThreadPacket::freeMem(.\n");
+	fprintf(stderr, "Inside ThreadPacket::freeMem().\n");
 	for (int i = 0; i < noOfPol; i++)
 	{
 		if (basicAnalysisWrite[i] != NULL)
@@ -159,6 +163,7 @@ void ThreadPacket::freeMem()
 		rFIFilteringChan[i] = NULL;
 		rFIFilteringTime[i] = NULL;
 	}
+	fprintf(stderr, "Exiting ThreadPacket::freeMem().\n");
 }
 
 class Runtime
@@ -179,7 +184,7 @@ public:
 	Correlator *shmInterface;
 	int nbuff;
 
-	Runtime(Information info_, int nParallel_);
+	Runtime(Information info_);
 	~Runtime();
 	void initializeFiles();
 	void fillPipe();
@@ -190,13 +195,12 @@ public:
 
 private:
 	int nActions;
-	int nParallel, nParallelTemp;
+	int nParallelTemp;
 	char chanFirst;
 	char hasReachedEof;
 
 	void writeAll(ThreadPacket *threadPacket);
 	void testStatistics(ThreadPacket *threadPacket);
-	void displayBlockIndex(int blockIndex);
 	void ioTasks(int threadPacketIndex);
 	void channelTasks(int threadPacketIndex, char dosecondpass);
 	void timeTasks(int threadPacketIndex, char dosecondpass);
@@ -204,26 +208,18 @@ private:
 	void writeFlagStats(ThreadPacket *threadPacket);
 };
 
-Runtime::Runtime(Information info_, int nParallel_)
+Runtime::Runtime(Information info_)
 {
-	fprintf(stderr, "Inside RunTime(Information info_, nParallel_: %d) Constructor.\n", nParallel_);
+	fprintf(stderr, "Inside RunTime(Information info_) Constructor.\n");
 	nActions = 4;
-	nParallel = nParallel_;
 	nParallelTemp = nParallel;
 	info = info_;
 	AcquireData *acquireData = new AcquireData(info);
 
-	if (!info.doReadFromFile)
-	{
-		acquireData->initializeSHM();
-	}
-	info.fillParams();
+	info.blockSizeSamples = (acquireData->info).blockSizeSamples;
+	info.blockSizeSec = (acquireData->info).blockSizeSec;
 
-	if (info.doFRB || info.shmID == 4 || info.shmID == 5)
-	{
-		info.blockSizeSamples = (acquireData->info).blockSizeSamples;
-		info.blockSizeSec = (acquireData->info).blockSizeSec;
-	}
+	fprintf(stderr, "Inside RunTime(info) Constructor, info.blockSizeSamples: %ld\n", info.blockSizeSamples);
 
 	if (info.freqIntFactor > 1)
 	{
@@ -248,33 +244,34 @@ Runtime::Runtime(Information info_, int nParallel_)
 			fprintf(stderr, "info.blockSizeSizeSec: %f\n", info.blockSizeSec);
 			info.blockSizeSamples += info.blockSizeSamples % info.timeIntFactor;
 			info.blockSizeSec = info.blockSizeSamples * info.samplingInterval;
-			// cout<<endl<<endl<<"Number of samples in each block should be an integer multiple of factor by which to integrate."<<endl;
-			// exit(0);
 		}
 		info.samplingInterval *= info.timeIntFactor;
 		info.blockSizeSamples /= info.timeIntFactor;
 		info.periodInSamples /= info.timeIntFactor;
 	}
-	if (!info.doReadFromFile)
-	{
-		shmInterface = new Correlator(acquireData->dataHdr, acquireData->dataBuffer);
-		fprintf(stderr, "Initilizing write SHM [FRB].\n");
-		shmInterface->initializeWriteSHM_SPOTLIGHT(0);
-		nbuff = acquireData->nbuff;
-	}
+
+	shmInterface = new Correlator(acquireData->dataHdr, acquireData->dataBuffer);
+	fprintf(stderr, "Initilizing write FRB_SHM_SPOTLIGHT.\n");
+	shmInterface->initializeWriteSHM_SPOTLIGHT(0);
+	nbuff = acquireData->nbuff;
 
 	AcquireData::info = info;
+	fprintf(stderr, "Inside RunTime(info) Constructor, info.blockSizeSamples: %ld, and acquireData->info.blockSizeSamples: %ld\n", info.blockSizeSamples, acquireData->info.blockSizeSamples);
 	AcquireData::curPos = long((info.startTime / info.samplingInterval)) * info.noOfChannels * info.noOfPol * info.sampleSizeBytes;
 	AcquireData::info.startTime = long(info.startTime / info.blockSizeSec) * info.blockSizeSec;
+
 	fprintf(stderr, "Inside RunTime() constructor, info.filepath is: %s\n", info.filepath);
 	info.display();
 
 	threadPacket = new ThreadPacket *[nActions * nParallel];
 	fprintf(stderr, "threadPacket = new ThreadPacket *[nActions * nParallel]; defined successfully.\n");
-
+	fprintf(stderr, "nActions: %d; nParallel: %d.\n", nActions, nParallel);
 	for (int i = 0; i < nActions * nParallel; i++)
+	{
+		fprintf(stderr, "Calling the ThreadPacket(info.noOfPol) Constructor.\n");
 		threadPacket[i] = new ThreadPacket(info.noOfPol);
-
+		threadPacket[i]->acquireData = acquireData; // Ask Aditya: Is this correct?? Commented out line 768 in ioTasks().
+	}
 	fprintf(stderr, "All threadPacket[i] initialised successfully.\n");
 
 	centralpass0 = new float[info.noOfPol];
@@ -285,26 +282,7 @@ Runtime::Runtime(Information info_, int nParallel_)
 	for (int k = 0; k < info.noOfPol; k++)
 		cumulativeBandpass[k] = new float[info.noOfChannels];
 	int totalBlocksNoOff = 0;
-	if (info.doReadFromFile)
-	{
-		double totalTime = (AcquireData::eof * info.samplingInterval) / (info.noOfChannels * info.sampleSizeBytes * info.noOfPol * info.freqIntFactor * info.timeIntFactor);
-		if (info.startTime > totalTime)
-		{
-			fprintf(stderr, "\nFile contains %lf seconds of data. Please give a starting time less than that.\n", totalTime);
-			exit(0);
-		}
-		double extraOffset = info.startTime * 1000.0 / info.periodInMs;
-		extraOffset = (extraOffset - floor(extraOffset));
-		info.profileOffset += extraOffset;
-		if (info.profileOffset >= 1.000)
-			info.profileOffset -= 1.00;
-		totalBlocks = ceil((totalTime - info.startTime) / (info.blockSizeSec));
-		totalBlocksNoOff = ceil(totalTime / (info.blockSizeSec));
-	}
-	else
-		totalBlocks = totalBlocksNoOff = 0;
-
-	fprintf(stderr, "After if (info.doReadFromFile){} else {}.\n");
+	totalBlocks = 0;
 
 	if (info.smoothFlagWindowLength > 0)
 		info.smoothFlagWindowLength = (int)(info.smoothFlagWindowLength / info.samplingInterval);
@@ -312,8 +290,9 @@ Runtime::Runtime(Information info_, int nParallel_)
 
 	fprintf(stderr, "Before for (int k = 0; k < info.noOfPol; k++).\n");
 
-	for (int k = 0; k < info.noOfPol; k++)
+	for (int k = 0; k < info.noOfPol; k++) // Initializing analysis class objects.
 	{
+		cout << 'info.doFilteringOnly: ' << info.doFilteringOnly << endl;
 		if (!info.doFilteringOnly)
 			threadPacket[(nActions - 1) * nParallel]->advancedAnalysisOld[k] = new AdvancedAnalysis(info);
 		threadPacket[nActions - 1]->basicAnalysis[k] = new BasicAnalysis(info);
@@ -335,10 +314,7 @@ Runtime::Runtime(Information info_, int nParallel_)
 	chanFirst = 0;
 	if ((info.doTimeFlag && info.doChanFlag && (info.flagOrder == 1)) || info.doUseNormalizedData || info.doChanFlag)
 		chanFirst = 1;
-	fprintf(stderr, "Reached end of Runtime()\n");
-	// omp_set_num_threads(2+3*nParallel);
-
-	// omp_set_dynamic(0);
+	fprintf(stderr, "Exiting Runtime(Information info_) Constructor\n");
 }
 
 Runtime::~Runtime()
@@ -347,14 +323,6 @@ Runtime::~Runtime()
 	delete[] blankTimeFlags;
 	delete[] blankChanFlags;
 	// delete[] histogramInterval;
-}
-
-void Runtime::displayBlockIndex(int blockIndex)
-{
-	if (info.doReadFromFile)
-		fprintf(stderr, "Block: %d of %d\n", blockIndex - nActions * nParallel + 1, totalBlocks);
-	else
-		fprintf(stderr, "Block: %d\n", blockIndex - nActions * nParallel + 1);
 }
 
 void Runtime::testStatistics(ThreadPacket *threadPacket)
@@ -628,7 +596,7 @@ void Runtime::quickclosePipe()
 	fprintf(stderr, "\nClosing AJAX from Runtime::quickclosePipe()\n");
 	for (int k = 0; k < nParallelTemp; k++)
 	{
-		displayBlockIndex(blockIndex + k);
+		fprintf(stderr, "Block: %d\n", blockIndex + k - nActions * nParallel + 1);
 		writeAll(threadPacket[k]);
 	}
 	if (info.doPolarMode)
@@ -682,7 +650,7 @@ void Runtime::closePipe()
 	fprintf(stderr, "\nClosing AJAX from Runtime::closePipe()\n");
 	for (int k = 0; k < nParallel; k++)
 	{
-		displayBlockIndex(blockIndex + k);
+		fprintf(stderr, "Block: %d\n", blockIndex + k - nActions * nParallel + 1);
 		writeAll(threadPacket[k]);
 	}
 	int temp = nParallel;
@@ -712,7 +680,7 @@ void Runtime::closePipe()
 
 		for (int k = 0; k < nParallel; k++)
 		{
-			displayBlockIndex(blockIndex + k);
+			fprintf(stderr, "Block: %d\n", blockIndex + k - nActions * nParallel + 1);
 			writeAll(threadPacket[k]);
 		}
 		blockIndex += nParallel;
@@ -797,7 +765,7 @@ void Runtime::ioTasks(int threadPacketIndex)
 		for (int iBeam = 0; iBeam < nBeams; iBeam++)
 		{
 			ThreadPacket *thisThreadPacket = threadPacket[threadPacketIndex + (iBeam % nParallel)];
-			thisThreadPacket->acquireData = new AcquireData(blockIndex + iBeam);
+			// thisThreadPacket->acquireData = new AcquireData(blockIndex * nBeams + iBeam);
 
 			readTime = omp_get_wtime();		 // benchmark
 			timeReadData -= omp_get_wtime(); // benchmark
@@ -816,9 +784,9 @@ void Runtime::ioTasks(int threadPacketIndex)
 		for (int iBeam = 0; iBeam < nBeams; iBeam++)
 		{
 			ThreadPacket *thisThreadPacket = threadPacket[threadPacketIndex + iBeam];
-			if (blockIndex >= nParallel * nActions)
+			if (blockIndex * nBeams + iBeam >= nParallel * nActions)
 			{
-				displayBlockIndex(blockIndex + iBeam);
+				fprintf(stderr, "Block: %d\n", blockIndex * nBeams + iBeam - nActions * nParallel + 1);
 				writeAll(thisThreadPacket);
 			}
 		}
@@ -846,12 +814,12 @@ void Runtime::floatConversionTasks(int threadPacketIndex)
 
 			timeConvertToFloat -= omp_get_wtime(); // benchmark
 
-			thisThreadPacket->acquireData->splitRawData();
+			// thisThreadPacket->acquireData->splitRawData();
 
-			if (info.timeIntFactor > 1 || info.freqIntFactor > 1)
-			{
-				thisThreadPacket->acquireData->averageRawData(info.timeIntFactor, info.freqIntFactor);
-			}
+			// if (info.timeIntFactor > 1 || info.freqIntFactor > 1)
+			// {
+			// 	thisThreadPacket->acquireData->averageRawData(info.timeIntFactor, info.freqIntFactor);
+			// }
 
 			timeConvertToFloat += omp_get_wtime(); // benchmark
 			for (int k = 0; k < info.noOfPol; k++)
@@ -1210,7 +1178,7 @@ int main(int argc, char *argv[])
 {
 	double totalTime = omp_get_wtime(); // benchmark
 	Information info;
-	info.startTime = 0.0;
+	info.startTime = 0, info.startBlockIndex = 0;
 	info.doFilteringOnly = 1; //***** -nodedisp set as the default option. It can still be enabled by using the -Dodedisp option. *****
 	info.doUseTempo2 = 0;
 	info.doZeroDMSub = 0;
@@ -1218,7 +1186,6 @@ int main(int argc, char *argv[])
 	info.psrcatdbPath = NULL;
 	info.isInline = 0;
 	info.doFRB = 0;
-	info.shmID = 1;
 	int arg = 1;
 	info.meanval = 8 * 1024; // Hard-coding optimization for Band-4 FRB data
 
@@ -1271,28 +1238,6 @@ int main(int argc, char *argv[])
 		case 'o':
 		{
 			info.outputfilepath = optarg;
-		}
-		break;
-
-		case 's':
-		{
-			if (info.doReadFromFile)
-			{
-				info.startTime = info.stringToDouble(optarg);
-				if (info.startTime < 0)
-				{
-					cout << "Start time cannot be negetive!" << endl;
-					exit(0);
-				}
-			}
-		}
-		break;
-
-		case 'I':
-		{
-			info.shmID = info.stringToDouble(optarg);
-			cout << "\n\n\nReading from SHM." << endl;
-			info.doReadFromFile = 0;
 		}
 		break;
 
@@ -1350,9 +1295,9 @@ int main(int argc, char *argv[])
 		startFlags[i] = 1;
 	for (int i = 0; i < info.noOfChannels - info.stopChannel; i++)
 		endFlags[i] = 1;
-	fprintf(stderr, "Attempting to define Runtime *runtime = new RunTime(info, nParallel).");
-	Runtime *runtime = new Runtime(info, nParallel);
-	fprintf(stderr, "Runtime *runtime = new RunTime(info, nParallel) defined successfully.");
+	fprintf(stderr, "Attempting to define Runtime *runtime = new RunTime(info, nParallel).\n");
+	Runtime *runtime = new Runtime(info);
+	fprintf(stderr, "Runtime *runtime = new RunTime(info, nParallel) defined successfully.\n");
 	// runtime->initializeFiles();
 
 	// code to capture cltr+c termination

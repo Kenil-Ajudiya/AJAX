@@ -36,7 +36,6 @@ class Information
 	int*			badChanBlocks;			// manually entered list of bad channel blocks
 	int				nBadChanBlocks;			// number of such bad blocks
 	unsigned short	meanval;
-	int				shmID;					// 1-> standard correlator shm		2-> ajax file shm		3-> ajax inline shm
 	//Parameters for polyco folding
 	char*			psrcatdbPath;			// Path to psrcat database.
 	double			MJDObs;					// Mean Julian Day at the start of observation
@@ -102,14 +101,10 @@ class Information
 	void 			readAjaxInputFile();						// Function to read from .in file
 	void 			display();									// Displays all input information to the user
 	void 			writeWpmonIn();								// Writes out a ajax.in sample when it is not found.
-	void 			writeInfFile();								// Writes out INF file to be used by presto
 	void 			displayNoOptionsHelp();						// Displays possible ways to run ajax
 	void 			genMJDObs();								// Generates mean julian day at the start of observation
-	void 			getPsrcatdbPath();							// Gets the location of psrcat database.
-	void 			checkPulsarName();							// Verifies if the pulsar name is valid
 	void 			calculateCutoff();
 	void 			errorChecks(); 								// Checks for error in the .in file
-	void 			fillParams();
 	void 			parseManFlagList(std::string& s);			// parses list of bad sub-bands
 };
 #endif

@@ -118,7 +118,6 @@ typedef struct
   int rec_ind;
   double RecStartTime[MaxRecs + 1];
   int marker_offsets[3][5];
-  // BeamHeaderType BeamHdr;
 } GlobalInfoType;
 
 /*
